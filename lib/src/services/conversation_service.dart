@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../models/conversation.dart';
 import 'api_service.dart';
 import 'websocket_service.dart';
@@ -64,6 +65,10 @@ class ConversationService extends ChangeNotifier {
     _conversations.insert(0, conversation);
     notifyListeners();
     return conversation;
+  }
+
+  Future<Map<String, dynamic>> uploadMedia(File file, String userId) async {
+    return await _apiService.uploadMedia(file, userId);
   }
 
   void _handleWebSocketMessage(Map<String, dynamic> data) {
@@ -142,6 +147,18 @@ class ConversationService extends ChangeNotifier {
       });
     }
     markAsRead(conversationId);
+  }
+
+  Future<void> rateConversation(String conversationId, int rating) async {
+    await _apiService.rateConversation(conversationId, rating);
+
+    // Update local state
+    final index = _conversations.indexWhere((c) => c.id == conversationId);
+    if (index != -1) {
+      _conversations[index] =
+          _conversations[index].copyWith(userSatisfaction: rating);
+      notifyListeners();
+    }
   }
 
   void _updateUnreadCount() {

@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
 import '../models/end_user.dart';
 import '../models/conversation.dart';
 import '../models/message.dart';
@@ -530,7 +533,89 @@ class ApiService {
     }
   }
 
+  /// Rate conversation satisfaction
+  Future<void> rateConversation(String conversationId, int rating) async {
+    final url = Uri.parse('$apiUrl/conversations/$conversationId/satisfaction');
+
+    try {
+      final response = await _client.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+        body: jsonEncode({'rating': rating}),
+      );
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        final errorBody = _parseErrorBody(response.body);
+        throw FeeddoApiException(
+          errorBody['error'] ?? 'Failed to rate conversation',
+          statusCode: response.statusCode,
+          details: errorBody['details'],
+        );
+      }
+    } catch (e) {
+      if (e is FeeddoApiException) rethrow;
+      throw FeeddoApiException(
+        'Network error: ${e.toString()}',
+        details: e,
+      );
+    }
+  }
+
   /// Parse error response body
+  /// Upload media file
+  Future<Map<String, dynamic>> uploadMedia(File file, String userId) async {
+    final url = Uri.parse('$apiUrl/media/upload?userId=$userId');
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers['x-api-key'] = apiKey;
+
+    final mimeType = lookupMimeType(file.path);
+    MediaType? contentType;
+    if (mimeType != null) {
+      final split = mimeType.split('/');
+      contentType = MediaType(split[0], split[1]);
+    }
+
+    final multipartFile = await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: contentType,
+    );
+    request.files.add(multipartFile);
+
+    try {
+      final streamedResponse = await _client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        if (json['success'] == true && json['media'] != null) {
+          return json['media'] as Map<String, dynamic>;
+        }
+        throw FeeddoApiException(
+            'Upload failed: ${json['error'] ?? 'Unknown error'}');
+      } else {
+        final errorBody = _parseErrorBody(response.body);
+        throw FeeddoApiException(
+          errorBody['error'] ?? 'Failed to upload media',
+          statusCode: response.statusCode,
+          details: errorBody['details'],
+        );
+      }
+    } catch (e) {
+      if (e is FeeddoApiException) rethrow;
+      throw FeeddoApiException(
+        'Network error: ${e.toString()}',
+        details: e,
+      );
+    }
+  }
+
   Map<String, dynamic> _parseErrorBody(String body) {
     try {
       return jsonDecode(body) as Map<String, dynamic>;

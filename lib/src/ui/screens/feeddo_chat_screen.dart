@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../../feeddo_client.dart';
 import '../../models/conversation.dart';
@@ -13,6 +15,7 @@ import '../widgets/task_card.dart';
 import '../widgets/ticket_card.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/typing_indicator.dart';
+import '../widgets/rating_widget.dart';
 
 class FeeddoChatScreen extends StatefulWidget {
   final Conversation? conversation;
@@ -363,22 +366,43 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
           backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
-            elevation: 0.5,
+            elevation: 0,
+            centerTitle: false,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                color: Colors.grey.withOpacity(0.1),
+                height: 1,
+              ),
+            ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
               onPressed: () => Navigator.of(context).pop(_hasSentMessage),
             ),
             title: Row(
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: theme.colors.primary,
-                  child: Text(
-                    displayTitle.substring(0, 1).toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: theme.colors.primary,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colors.primary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      displayTitle.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -394,15 +418,30 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                           color: Colors.black,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       if (conversation?.status == 'active')
-                        const Text(
-                          'Online',
-                          style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.green,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Online',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                     ],
                   ),
@@ -475,15 +514,140 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     );
   }
 
+  Future<void> _pickAndUploadMedia() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    final file = File(image.path);
+    final userId = Feeddo.instance.userId;
+
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not logged in')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final media =
+          await Feeddo.instance.conversationService.uploadMedia(file, userId);
+
+      // Send message with attachment
+      _sendAttachmentMessage(media);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload media: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
+    }
+  }
+
+  void _sendAttachmentMessage(Map<String, dynamic> media) {
+    final wsService = Feeddo.instance.webSocketService;
+    if (wsService == null) return;
+
+    // Optimistically add message
+    final tempMessage = Message(
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      conversationId: _conversation?.id ?? 'temp',
+      role: 'user',
+      content: 'Sent an attachment',
+      hasAttachments: true,
+      attachments: [media],
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    setState(() {
+      _messages.insert(0, tempMessage);
+      _hasSentMessage = true;
+    });
+
+    // Send via WebSocket
+    final messageData = {
+      'type': 'message',
+      'message': 'Sent an attachment',
+      'id': tempMessage.id,
+      'attachments': [media],
+    };
+
+    if (_conversation != null) {
+      messageData['conversationId'] = _conversation!.id;
+    }
+
+    wsService.send(messageData);
+  }
+
   Widget _buildInputArea(FeeddoTheme theme) {
+    if (_conversation?.status == 'resolved') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: theme.colors.border)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'This conversation has been resolved.',
+              style: TextStyle(
+                color: theme.colors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text('How would you rate your experience?'),
+            const SizedBox(height: 8),
+            RatingWidget(
+              initialRating: _conversation?.userSatisfaction ?? 0,
+              onRatingChanged: _submitRating,
+              readOnly: _conversation?.userSatisfaction != null,
+            ),
+          ],
+        ),
+      );
+    }
+
     return ChatInputArea(
       controller: _messageController,
       isSending: _isSending || _isInitializingConversation,
       onSend: _sendMessage,
-      onAttachment: () {
-        // TODO: Implement attachment
-      },
+      onAttachment: _pickAndUploadMedia,
     );
+  }
+
+  Future<void> _submitRating(int rating) async {
+    if (_conversation == null) return;
+    try {
+      await Feeddo.instance.conversationService
+          .rateConversation(_conversation!.id, rating);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thank you for your feedback!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to submit rating: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _fetchConversation(String conversationId) async {

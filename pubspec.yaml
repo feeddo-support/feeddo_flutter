@@ -5,7 +5,7 @@ homepage: https://feeddo.dev
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
-  flutter: ">=1.17.0"
+  flutter: '>=1.17.0'
 
 dependencies:
   flutter:
@@ -15,6 +15,11 @@ dependencies:
   package_info_plus: ^8.0.0
   shared_preferences: ^2.2.0
   intl: ^0.20.2
+  image_picker: ^1.2.1
+  mime: ^2.0.0
+  http_parser: ^4.1.2
+  video_player: ^2.10.1
+  chewie: ^1.13.0
 
 dev_dependencies:
   flutter_test:

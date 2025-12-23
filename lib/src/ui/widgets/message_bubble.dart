@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
 import '../../theme/feeddo_theme.dart';
+import 'attachment_preview.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -70,7 +71,9 @@ class MessageBubble extends StatelessWidget {
     // Parse attachments
     List<dynamic> files = [];
     if (message.hasAttachments && message.attachments != null) {
-      if (message.attachments is Map) {
+      if (message.attachments is List) {
+        files = message.attachments as List;
+      } else if (message.attachments is Map) {
         final map = message.attachments as Map;
         if (map.containsKey('files') && map['files'] is List) {
           files = map['files'];
@@ -165,44 +168,16 @@ class MessageBubble extends StatelessWidget {
                     if (parsedContent.content.isNotEmpty)
                       const SizedBox(height: 8),
                     ...files.map((file) {
+                      final url = (file['url'] as String).startsWith('http')
+                          ? file['url']
+                          : 'https://feeddo-backend.neloy-nr2.workers.dev${file['url']}';
+
                       return Container(
                         margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color:
-                              isUser ? Colors.black : const Color(0xFF6B4BA1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            'https://feeddo-backend.neloy-nr2.workers.dev${file['url']}',
-                            width: 200,
-                            height: 200,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) {
-                              final fileName = file['fileName'] ?? 'Attachment';
-                              return Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.attachment,
-                                      size: 16, color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      fileName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
+                        child: AttachmentPreview(
+                          url: url,
+                          contentType: file['contentType'],
+                          fileName: file['fileName'],
                         ),
                       );
                     }).toList(),

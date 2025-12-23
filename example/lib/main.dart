@@ -49,7 +49,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-          apiKey: 'fdo_07465320c0974c05b3076c474f379a86', userName: 'Subhadip');
+          apiKey: 'fdo_193677f5d3fd43e2ba1ff9da4a53b658', userName: 'Subhadip');
 
       setState(() {
         _userId = userId;
