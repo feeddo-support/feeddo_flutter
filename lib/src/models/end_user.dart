@@ -141,12 +141,14 @@ class UpsertEndUserResponse {
   final String userId;
   final String? externalUserId;
   final String action; // "created" or "updated"
+  final Map<String, dynamic>? recentConversation;
 
   const UpsertEndUserResponse({
     required this.success,
     required this.userId,
     this.externalUserId,
     required this.action,
+    this.recentConversation,
   });
 
   factory UpsertEndUserResponse.fromJson(Map<String, dynamic> json) {
@@ -155,6 +157,7 @@ class UpsertEndUserResponse {
       userId: json['userId'] as String,
       externalUserId: json['externalUserId'] as String?,
       action: json['action'] as String,
+      recentConversation: json['recentConversation'] as Map<String, dynamic>?,
     );
   }
 }

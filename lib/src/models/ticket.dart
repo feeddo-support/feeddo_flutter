@@ -6,6 +6,8 @@ class Ticket {
   final bool isResolved;
   final int createdAt;
   final int updatedAt;
+  final bool isOwner;
+  final String? conversationId;
 
   Ticket({
     required this.id,
@@ -15,6 +17,8 @@ class Ticket {
     required this.isResolved,
     required this.createdAt,
     required this.updatedAt,
+    this.isOwner = false,
+    this.conversationId,
   });
 
   factory Ticket.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class Ticket {
       isResolved: json['isResolved'] ?? false,
       createdAt: json['createdAt'] ?? 0,
       updatedAt: json['updatedAt'] ?? 0,
+      isOwner: json['isOwner'] ?? false,
+      conversationId: json['conversationId'],
     );
   }
 }

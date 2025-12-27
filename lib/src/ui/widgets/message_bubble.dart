@@ -97,28 +97,19 @@ class MessageBubble extends StatelessWidget {
                   maxWidth: MediaQuery.of(context).size.width * 0.85),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isUser ? Colors.black : Colors.white,
+                color: isUser ? theme.colors.primary : theme.colors.surface,
                 borderRadius: BorderRadius.only(
                   bottomLeft: const Radius.circular(16),
                   bottomRight: const Radius.circular(16),
-                  topLeft: Radius.circular(isUser ? 16 : 16),
-                  topRight: Radius.circular(isUser ? 16 : 16),
+                  topLeft: Radius.circular(isUser ? 16 : 4),
+                  topRight: Radius.circular(isUser ? 4 : 16),
                 ),
                 border: isUser
                     ? null
                     : Border.all(
-                        color: const Color(0xFFE5E7EB),
+                        color: theme.colors.border,
                         width: 1,
                       ),
-                boxShadow: isUser
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,24 +123,26 @@ class MessageBubble extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: message.role == 'human'
                                 ? Colors.purple.shade600
-                                : const Color.fromARGB(255, 0, 81, 255),
+                                : theme.colors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(32),
                           ),
                           child: Icon(
                             message.role == 'human'
                                 ? Icons.support_agent
                                 : Icons.catching_pokemon,
-                            color: Colors.white,
+                            color: message.role == 'human'
+                                ? Colors.white
+                                : theme.colors.primary,
                             size: 18,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           message.displayName ?? 'Feeddo',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
-                            color: Colors.black,
+                            color: theme.colors.textPrimary,
                           ),
                         ),
                       ],
@@ -160,7 +153,9 @@ class MessageBubble extends StatelessWidget {
                     Text(
                       parsedContent.content,
                       style: TextStyle(
-                        color: isUser ? Colors.white : Colors.black87,
+                        color: isUser
+                            ? (theme.isDark ? Colors.black : Colors.white)
+                            : theme.colors.textPrimary,
                         fontSize: 15,
                       ),
                     ),
@@ -191,8 +186,10 @@ class MessageBubble extends StatelessWidget {
                       _formatTime(message.createdAt),
                       style: TextStyle(
                         color: isUser
-                            ? Colors.white.withOpacity(0.7)
-                            : Colors.grey.shade500,
+                            ? (theme.isDark
+                                ? Colors.black.withOpacity(0.7)
+                                : Colors.white.withOpacity(0.7))
+                            : theme.colors.textSecondary,
                         fontSize: 11,
                       ),
                     ),

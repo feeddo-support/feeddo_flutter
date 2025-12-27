@@ -53,7 +53,7 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
     try {
       _videoController = VideoPlayerController.networkUrl(
         Uri.parse(widget.url),
-        httpHeaders: {'x-api-key': Feeddo.instance.apiService.apiKey},
+        httpHeaders: {'x-api-key': FeeddoInternal.instance.apiService.apiKey},
       );
       await _videoController!.initialize();
 
@@ -106,7 +106,7 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
         borderRadius: BorderRadius.circular(8),
         child: Image.network(
           widget.url,
-          headers: {'x-api-key': Feeddo.instance.apiService.apiKey},
+          headers: {'x-api-key': FeeddoInternal.instance.apiService.apiKey},
           width: 200,
           height: 200,
           fit: BoxFit.cover,

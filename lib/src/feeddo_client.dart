@@ -5,7 +5,7 @@ import 'services/conversation_service.dart';
 import 'models/home_data.dart';
 import 'models/end_user.dart';
 import 'models/conversation.dart';
-import 'models/task.dart';
+
 import 'models/ticket.dart';
 import 'models/task_comment.dart';
 import 'utils/device_info_helper.dart';
@@ -14,26 +14,53 @@ import 'ui/screens/feeddo_home_screen.dart';
 import 'ui/screens/feeddo_messages_screen.dart';
 import 'ui/screens/feeddo_tickets_screen.dart';
 import 'ui/screens/feeddo_tasks_screen.dart';
+import 'ui/widgets/feeddo_notification_badge.dart';
 import 'theme/feeddo_theme.dart';
 
-/// Feeddo SDK - AI-powered customer support and feedback
-class Feeddo {
-  static Feeddo? _instance;
+/// Result from Feeddo initialization
+class InitResult {
+  final String userId;
+  final Conversation? recentConversation;
+
+  const InitResult({
+    required this.userId,
+    this.recentConversation,
+  });
+
+  /// Check if there are unread messages
+  bool get hasUnreadMessages =>
+      recentConversation != null && recentConversation!.unreadMessages > 0;
+}
+
+/// Internal Feeddo SDK implementation
+class FeeddoInternal {
+  static FeeddoInternal? _instance;
   final ApiService _apiService;
-  WebSocketService? _webSocketService;
-  ConversationService? _conversationService;
+  late final WebSocketService _webSocketService;
+  late final ConversationService _conversationService;
   String? _cachedUserId;
   String? _chatBotName;
+  Conversation? _recentConversation;
+  BuildContext? _notificationContext;
+  bool _isInAppNotificationOn = false;
+  FeeddoTheme? _notificationTheme;
+  Duration _notificationDuration = const Duration(seconds: 10);
 
   // Private constructor
-  Feeddo._(String apiKey)
+  FeeddoInternal._(String apiKey)
       : _apiService = ApiService(
-          apiUrl: 'https://feeddo-backend.neloy-nr2.workers.dev/api',
+          apiUrl: 'https://feeddo-backend-prod.neloy-nr2.workers.dev/api',
           apiKey: apiKey,
-        );
+        ) {
+    _webSocketService = WebSocketService(
+      baseUrl: _apiService.apiUrl,
+      apiKey: _apiService.apiKey,
+    );
+    _conversationService = ConversationService(_apiService, _webSocketService);
+  }
 
   /// Get the singleton instance
-  static Feeddo get instance {
+  static FeeddoInternal get instance {
     if (_instance == null) {
       throw Exception('Feeddo not initialized. Call Feeddo.init() first.');
     }
@@ -49,12 +76,21 @@ class Feeddo {
   /// Get the chatbot name
   String get chatBotName => instance._chatBotName ?? 'Feeddo';
 
+  /// Get the recent conversation with unread messages (if any)
+  Conversation? get recentConversation => instance._recentConversation;
+
   /// Initialize Feeddo SDK and create/update user
   ///
   /// Call this method at app startup or when user data changes.
-  /// Automatically handles user ID management and device info collection.
+  /// Automatically handles user ID management, device info collection,
+  /// and in-app notifications.
+  ///
+  /// Returns an [InitResult] containing the user ID and recent conversation (if any).
   ///
   /// [apiKey]: Your Feeddo API key (required)
+  /// [context]: BuildContext for showing notifications (optional)
+  /// [isInAppNotificationOn]: Enable/disable in-app notifications (default: true)
+  /// [theme]: Theme for notifications (optional, defaults to dark theme)
   /// [externalUserId]: Your system's user ID (optional)
   /// [userName]: User's display name (optional)
   /// [email]: User's email (optional)
@@ -64,17 +100,27 @@ class Feeddo {
   ///
   /// Example:
   /// ```dart
-  /// await Feeddo.init(
+  /// // With notifications
+  /// final result = await Feeddo.init(
   ///   apiKey: 'your-api-key',
-  ///   externalUserId: 'user-123',
+  ///   context: context,
   ///   userName: 'John Doe',
   ///   email: 'john@example.com',
-  ///   subscriptionStatus: 'premium',
-  ///   customAttributes: {'plan': 'pro'},
+  ///   isInAppNotificationOn: true, // Automatically shows notifications
+  /// );
+  ///
+  /// // Without notifications
+  /// final result = await Feeddo.init(
+  ///   apiKey: 'your-api-key',
+  ///   userName: 'John Doe',
   /// );
   /// ```
-  static Future<String> init({
+  static Future<InitResult> init({
     required String apiKey,
+    BuildContext? context,
+    bool isInAppNotificationOn = true,
+    FeeddoTheme? theme,
+    Duration? notificationDuration,
     String? externalUserId,
     String? userName,
     String? email,
@@ -83,16 +129,52 @@ class Feeddo {
     Map<String, dynamic>? customAttributes,
   }) async {
     // Create singleton instance if not exists
-    _instance ??= Feeddo._(apiKey);
+    _instance ??= FeeddoInternal._(apiKey);
+
+    // Store context and notification settings
+    _instance!._notificationContext = context;
+    _instance!._isInAppNotificationOn =
+        isInAppNotificationOn && context != null;
+    _instance!._notificationTheme = theme ?? FeeddoTheme.dark();
+    if (notificationDuration != null) {
+      _instance!._notificationDuration = notificationDuration;
+    }
 
     // Call instance method to upsert user
-    return await _instance!._upsertUser(
+    final userId = await _instance!._upsertUser(
       externalUserId: externalUserId,
       userName: userName,
       email: email,
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
+    );
+
+    // Automatically show notification if there are unread messages
+    if (isInAppNotificationOn &&
+        context != null &&
+        _instance!._recentConversation != null) {
+      final recentConv = _instance!._recentConversation!;
+      if (recentConv.unreadMessages > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          FeeddoNotificationManager.showNotification(
+            context,
+            recentConv,
+            theme: _instance!._notificationTheme,
+            duration: _instance!._notificationDuration,
+          );
+        });
+      }
+    }
+
+    // Setup real-time notification listener if enabled
+    if (isInAppNotificationOn && context != null) {
+      _instance!._setupNotificationListener();
+    }
+
+    return InitResult(
+      userId: userId,
+      recentConversation: _instance!._recentConversation,
     );
   }
 
@@ -107,6 +189,14 @@ class Feeddo {
   }) async {
     // Load cached user ID from SharedPreferences
     _cachedUserId ??= await StorageHelper.getUserId();
+
+    // Load saved user data from preferences if attributes are null
+    externalUserId ??= await StorageHelper.getExternalUserId();
+    userName ??= await StorageHelper.getUserName();
+    email ??= await StorageHelper.getEmail();
+    userSegment ??= await StorageHelper.getUserSegment();
+    subscriptionStatus ??= await StorageHelper.getSubscriptionStatus();
+    customAttributes ??= await StorageHelper.getCustomAttributes();
 
     // Collect device info
     String? platform;
@@ -145,6 +235,17 @@ class Feeddo {
       // Cache the user ID
       _cachedUserId = response.userId;
 
+      // Parse and store recent conversation if available
+      if (response.recentConversation != null) {
+        try {
+          _recentConversation =
+              Conversation.fromJson(response.recentConversation!);
+          _conversationService.updateConversation(_recentConversation!);
+        } catch (e) {
+          debugPrint('Feeddo: Failed to parse recent conversation: $e');
+        }
+      }
+
       // Save to SharedPreferences
       await StorageHelper.saveUserId(response.userId);
       await StorageHelper.saveUserData(
@@ -162,6 +263,47 @@ class Feeddo {
       debugPrint('Feeddo: Failed to initialize: $e');
       rethrow;
     }
+  }
+
+  /// Update user information (e.g., username, email, etc.)
+  ///
+  /// This method allows you to update user information after initialization.
+  /// Useful for updating username when user enters it for the first time.
+  ///
+  /// Example:
+  /// ```dart
+  /// await Feeddo.instance.updateUser(userName: 'John Doe');
+  /// ```
+  Future<String> updateUser({
+    String? externalUserId,
+    String? userName,
+    String? email,
+    String? userSegment,
+    String? subscriptionStatus,
+    Map<String, dynamic>? customAttributes,
+  }) async {
+    return await _upsertUser(
+      externalUserId: externalUserId,
+      userName: userName,
+      email: email,
+      userSegment: userSegment,
+      subscriptionStatus: subscriptionStatus,
+      customAttributes: customAttributes,
+    );
+  }
+
+  /// Internal method to setup notification listener for WebSocket messages
+  void _setupNotificationListener() {
+    conversationService.onNewMessage = (conversation) {
+      if (_notificationContext != null && _isInAppNotificationOn) {
+        FeeddoNotificationManager.showNotification(
+          _notificationContext!,
+          conversation,
+          theme: _notificationTheme,
+          duration: _notificationDuration,
+        );
+      }
+    };
   }
 
   /// Get home data for the current user
@@ -203,33 +345,6 @@ class Feeddo {
         .createConversation(userId, agentName: agentName);
   }
 
-  /// Get a task by ID
-  Future<Task> getTask(String taskId) async {
-    return await _apiService.getTask(taskId, userId: userId);
-  }
-
-  /// Get tasks
-  Future<List<Task>> getTasks({
-    String? type,
-    String? priority,
-    String? sortBy,
-    String? sortOrder,
-    int? page,
-    int? limit,
-    bool? createdByMe,
-  }) async {
-    return await _apiService.getTasks(
-      userId: userId,
-      type: type,
-      priority: priority,
-      sortBy: sortBy,
-      sortOrder: sortOrder,
-      page: page,
-      limit: limit,
-      createdByMe: createdByMe,
-    );
-  }
-
   /// Get a ticket by ID
   Future<Ticket> getTicket(String ticketId) async {
     return await _apiService.getTicket(ticketId, userId: userId);
@@ -254,16 +369,10 @@ class Feeddo {
   }
 
   /// Get the WebSocket service
-  WebSocketService? get webSocketService => _webSocketService;
+  WebSocketService get webSocketService => _webSocketService;
 
   /// Get the Conversation service
-  ConversationService get conversationService {
-    if (_conversationService == null) {
-      _conversationService =
-          ConversationService(_apiService, _webSocketService);
-    }
-    return _conversationService!;
-  }
+  ConversationService get conversationService => _conversationService;
 
   /// Connect to WebSocket
   Future<void> connectWebSocket({String? conversationId}) async {
@@ -272,25 +381,27 @@ class Feeddo {
       return;
     }
 
-    if (_webSocketService == null) {
-      _webSocketService = WebSocketService(
-        baseUrl: _apiService.apiUrl,
-        apiKey: _apiService.apiKey,
-        userId: userId!,
-      );
-      // If conversation service was already created, update it with the new websocket service
-      _conversationService?.updateWebSocketService(_webSocketService!);
-    }
-
-    // If we are already connected, we might want to reconnect if the conversationId is different?
-    // For now, let's just pass it to connect.
-    await _webSocketService!.connect(conversationId: conversationId);
+    await _webSocketService.connect(
+        userId: userId!, conversationId: conversationId);
   }
 
   /// Disconnect from WebSocket
   void disconnectWebSocket() {
-    _webSocketService?.disconnect();
-    _webSocketService = null;
+    _webSocketService.disconnect();
+  }
+
+  /// Dispose and cleanup Feeddo instance
+  ///
+  /// Call this when you want to completely reset Feeddo state,
+  /// typically when user logs out.
+  static void dispose() {
+    if (_instance != null) {
+      _instance!.conversationService.onNewMessage = null;
+      _instance!.disconnectWebSocket();
+      _instance!._webSocketService.dispose();
+      FeeddoNotificationManager.clearAll();
+      _instance = null;
+    }
   }
 
   /// Open the Feeddo support home screen
@@ -304,8 +415,7 @@ class Feeddo {
         builder: (context) => FeeddoHomeScreen(
           theme: theme ?? FeeddoTheme.dark(),
           onClose: () {
-            // Disconnect when closing via custom close button if any
-            _instance?.disconnectWebSocket();
+            // Just pop, don't disconnect
             Navigator.of(context).pop();
           },
           onMessagesTap: () {
@@ -341,8 +451,11 @@ class Feeddo {
       ),
     )
         .then((_) {
-      // Disconnect when the screen is popped (app exit context)
-      _instance?.disconnectWebSocket();
+      // Do not disconnect when the screen is popped to keep receiving notifications
+      // _instance?.disconnectWebSocket();
+
+      // Reconnect with no conversation ID to ensure we receive all notifications
+      _instance?.connectWebSocket(conversationId: null);
     });
   }
 }

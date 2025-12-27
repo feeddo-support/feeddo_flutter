@@ -9,6 +9,8 @@ AI-powered customer support and feedback widget for Flutter applications. Automa
 ✅ **Backend User ID Management**: User IDs generated and managed by Feeddo backend  
 ✅ **Data Persistence**: All user data saved to SharedPreferences automatically  
 ✅ **Custom Attributes**: Store custom key-value pairs for user segmentation  
+✅ **In-App Notifications**: Instagram-style notifications for unread messages  
+✅ **Real-time Updates**: WebSocket-based message notifications  
 ✅ **Cross-Platform**: Works on iOS, Android, Web, macOS, Windows, Linux  
 ✅ **Type Safe**: Full TypeScript-like type safety with Dart  
 ✅ **Geo Detection**: Country and locale automatically detected from IP address by backend  
@@ -30,49 +32,75 @@ flutter pub get
 
 ## Quick Start
 
-### 1. Initialize Feeddo Client
+### 1. Initialize Feeddo
 
 ```dart
 import 'package:feeddo_flutter/feeddo_flutter.dart';
 
-// Initialize the client with your app ID
-final feeddo = FeeddoClient(
-  appId: 'your-app-id',
-  // apiUrl: 'https://api.feeddo.dev', // Optional: custom API URL
-);
-```
-
-### 2. Initialize User on App Launch
-
-```dart
-// On app launch or user login - creates new user or loads existing
-final userId = await feeddo.initializeUser(
-  externalUserId: 'user-123',  // Your system's user ID
+// Initialize Feeddo - notifications are automatically handled!
+final result = await Feeddo.init(
+  apiKey: 'your-api-key',
+  context: context, // Optional: pass context to enable notifications
   userName: 'John Doe',
   email: 'john@example.com',
-  subscriptionStatus: 'premium',
-  customAttributes: {
-    'plan': 'pro',
-    'signupDate': '2024-01-01',
-  },
+  isInAppNotificationOn: true, // Default is true - automatically shows notifications
+  theme: FeeddoTheme.dark(),
 );
 
-print('User initialized: $userId');
+// That's it! Notifications will automatically show for:
+// - Unread messages on init
+// - New messages from WebSocket
 ```
 
-### 3. Update User Information
+### 2. Initialize Without Notifications
 
 ```dart
-// When user updates their profile - just call initializeUser again
-await feeddo.initializeUser(
-  externalUserId: 'user-123',
-  userName: 'John Smith',  // Updated name
-  subscriptionStatus: 'premium',
-  customAttributes: {
-    'plan': 'enterprise',  // Updated plan
-  },
+// If you don't want notifications, just omit the context
+final result = await Feeddo.init(
+  apiKey: 'your-api-key',
+  userName: 'John Doe',
+  email: 'john@example.com',
 );
 ```
+
+### 3. Open Support Widget
+
+```dart
+// Open Feeddo support screen
+Feeddo.show(context, theme: FeeddoTheme.dark());
+```
+
+### 4. Clean Up (Optional)
+
+```dart
+// When user logs out
+Feeddo.dispose();
+```
+
+## In-App Notifications
+
+Feeddo includes Instagram-style in-app notifications that work automatically!
+
+**Simple Setup:**
+```dart
+final result = await Feeddo.init(
+  apiKey: 'your-key',
+  context: context, // Just pass context!
+  isInAppNotificationOn: true, // That's all you need!
+);
+```
+
+**Features:**
+- 🎨 Beautiful slide-in notification banners
+- 📬 Automatically shows unread messages on init
+- ⚡ Automatically shows new WebSocket messages
+- 🎯 Tap to open conversation
+- ⏱️ Auto-dismiss after 5 seconds
+- 🎨 Dark/light theme support
+- 🚀 Zero configuration required!
+
+📖 **[Read the full Notification Guide →](NOTIFICATION_GUIDE.md)**  
+⚡ **[Quick Reference →](NOTIFICATION_QUICKREF.md)**
 
 ## API Reference
 

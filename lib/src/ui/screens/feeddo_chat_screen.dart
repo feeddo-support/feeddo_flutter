@@ -36,6 +36,7 @@ class FeeddoChatScreen extends StatefulWidget {
 class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _inputFocusNode = FocusNode();
   bool _isLoading = true;
   List<Message> _messages = [];
   String? _error;
@@ -61,7 +62,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     if (_conversation != null) {
       _loadMessages();
-      Feeddo.instance.conversationService
+      FeeddoInternal.instance.conversationService
           .setActiveConversationId(_conversation!.id);
     } else {
       _isLoading = false;
@@ -69,7 +70,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
 
     _setupWebSocket();
-    Feeddo.instance.conversationService.addListener(_onConversationUpdated);
+    FeeddoInternal.instance.conversationService
+        .addListener(_onConversationUpdated);
 
     // Send read receipt when conversation is opened
     if (_conversation != null) {
@@ -77,15 +79,22 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
         _sendReadReceipt();
       });
     }
+
+    // Auto-focus the input field
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _inputFocusNode.requestFocus();
+    });
   }
 
   @override
   void dispose() {
-    Feeddo.instance.conversationService.setActiveConversationId(null);
-    Feeddo.instance.conversationService.removeListener(_onConversationUpdated);
+    FeeddoInternal.instance.conversationService.setActiveConversationId(null);
+    FeeddoInternal.instance.conversationService
+        .removeListener(_onConversationUpdated);
     _wsSubscription?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
+    _inputFocusNode.dispose();
     super.dispose();
   }
 
@@ -97,9 +106,9 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
   void _setupWebSocket() {
     // Ensure we are connected to this conversation
-    Feeddo.instance.connectWebSocket(conversationId: _conversation?.id);
+    FeeddoInternal.instance.connectWebSocket(conversationId: _conversation?.id);
 
-    final wsService = Feeddo.instance.webSocketService;
+    final wsService = FeeddoInternal.instance.webSocketService;
     if (wsService != null) {
       _wsSubscription = wsService.messages.listen((data) {
         _handleWebSocketMessage(data);
@@ -160,7 +169,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
   void _sendReadReceipt() {
     if (_conversation == null) return;
-    Feeddo.instance.conversationService.sendReadReceipt(_conversation!.id);
+    FeeddoInternal.instance.conversationService
+        .sendReadReceipt(_conversation!.id);
   }
 
   void _addWelcomeMessage() {
@@ -183,7 +193,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       hasAttachments: false,
       attachments: null,
       createdAt: DateTime.now().millisecondsSinceEpoch,
-      displayName: Feeddo.instance.chatBotName,
+      displayName: FeeddoInternal.instance.chatBotName,
     );
 
     setState(() {
@@ -204,8 +214,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
         _error = null;
       });
 
-      final messages =
-          await Feeddo.instance.apiService.getMessages(_conversation!.id);
+      final messages = await FeeddoInternal.instance.apiService
+          .getMessages(_conversation!.id);
 
       setState(() {
         _messages = messages.reversed.toList();
@@ -250,9 +260,11 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
   Widget _buildTaskCardUI(Task task) {
     return TaskCard(
       task: task,
+      theme: _theme,
       onTap: () => TaskDetailsSheet.show(
         context,
         task: task,
+        theme: _theme,
         onTaskUpdated: (updatedTask) {
           setState(() {
             _taskCache[updatedTask.id] = updatedTask;
@@ -268,7 +280,9 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
 
     if (!_taskFutures.containsKey(taskId)) {
-      _taskFutures[taskId] = Feeddo.instance.getTask(taskId).then((task) {
+      _taskFutures[taskId] = FeeddoInternal.instance.apiService
+          .getTask(taskId, userId: FeeddoInternal.instance.userId)
+          .then((task) {
         if (mounted) {
           setState(() {
             _taskCache[taskId] = task;
@@ -302,12 +316,15 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
   Widget _buildTicketCard(String ticketId) {
     if (_ticketCache.containsKey(ticketId)) {
-      return TicketCard(ticket: _ticketCache[ticketId]!);
+      return TicketCard(
+        ticket: _ticketCache[ticketId]!,
+        theme: _theme,
+      );
     }
 
     if (!_ticketFutures.containsKey(ticketId)) {
       _ticketFutures[ticketId] =
-          Feeddo.instance.getTicket(ticketId).then((ticket) {
+          FeeddoInternal.instance.getTicket(ticketId).then((ticket) {
         if (mounted) {
           setState(() {
             _ticketCache[ticketId] = ticket;
@@ -334,7 +351,10 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
           return const SizedBox.shrink();
         }
 
-        return TicketCard(ticket: snapshot.data!);
+        return TicketCard(
+          ticket: snapshot.data!,
+          theme: _theme,
+        );
       },
     );
   }
@@ -346,7 +366,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     // Get the latest conversation object from the service if available
     Conversation? conversation = _conversation;
     if (conversation != null) {
-      conversation = Feeddo.instance.conversationService.conversations
+      conversation = FeeddoInternal.instance.conversationService.conversations
           .firstWhere((c) => c.id == conversation!.id,
               orElse: () => conversation!);
     }
@@ -354,7 +374,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     // Use chatbot name for new conversations, otherwise use the conversation's display name
     final displayTitle = conversation?.displayName ??
         conversation?.title ??
-        Feeddo.instance.chatBotName;
+        FeeddoInternal.instance.chatBotName;
 
     return PopScope(
         canPop: false,
@@ -363,20 +383,20 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
           Navigator.of(context).pop(_hasSentMessage);
         },
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: theme.colors.background,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            backgroundColor: theme.colors.appBarBackground,
             elevation: 0,
             centerTitle: false,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
               child: Container(
-                color: Colors.grey.withOpacity(0.1),
+                color: theme.colors.divider.withOpacity(0.1),
                 height: 1,
               ),
             ),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              icon: Icon(Icons.arrow_back, color: theme.colors.iconColor),
               onPressed: () => Navigator.of(context).pop(_hasSentMessage),
             ),
             title: Row(
@@ -398,8 +418,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                   child: Center(
                     child: Text(
                       displayTitle.substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: theme.isDark ? Colors.black : Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -414,8 +434,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                     children: [
                       Text(
                         displayTitle,
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: TextStyle(
+                          color: theme.colors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.5,
@@ -427,16 +447,16 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                             Container(
                               width: 6,
                               height: 6,
-                              decoration: const BoxDecoration(
-                                color: Colors.green,
+                              decoration: BoxDecoration(
+                                color: theme.colors.success,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 4),
-                            const Text(
+                            Text(
                               'Online',
                               style: TextStyle(
-                                color: Colors.grey,
+                                color: theme.colors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -521,7 +541,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     if (image == null) return;
 
     final file = File(image.path);
-    final userId = Feeddo.instance.userId;
+    final userId = FeeddoInternal.instance.userId;
 
     if (userId == null) {
       if (mounted) {
@@ -537,8 +557,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     });
 
     try {
-      final media =
-          await Feeddo.instance.conversationService.uploadMedia(file, userId);
+      final media = await FeeddoInternal.instance.conversationService
+          .uploadMedia(file, userId);
 
       // Send message with attachment
       _sendAttachmentMessage(media);
@@ -557,9 +577,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
   }
 
-  void _sendAttachmentMessage(Map<String, dynamic> media) {
-    final wsService = Feeddo.instance.webSocketService;
-    if (wsService == null) return;
+  Future<void> _sendAttachmentMessage(Map<String, dynamic> media) async {
+    final wsService = FeeddoInternal.instance.webSocketService;
 
     // Optimistically add message
     final tempMessage = Message(
@@ -589,15 +608,26 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       messageData['conversationId'] = _conversation!.id;
     }
 
-    wsService.send(messageData);
+    await wsService.send(messageData);
   }
 
   Widget _buildInputArea(FeeddoTheme theme) {
-    if (_conversation?.status == 'resolved') {
+    // Get the latest conversation object from the service
+    Conversation? conversation = _conversation;
+    if (conversation != null) {
+      conversation = FeeddoInternal.instance.conversationService.conversations
+          .firstWhere((c) => c.id == conversation!.id,
+              orElse: () => conversation!);
+    }
+
+    if (conversation?.status == 'resolved') {
+      final hasRating = conversation?.userSatisfaction != null &&
+          conversation!.userSatisfaction! > 0;
+
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colors.surface,
           border: Border(top: BorderSide(color: theme.colors.border)),
         ),
         child: Column(
@@ -611,13 +641,37 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text('How would you rate your experience?'),
+            if (hasRating)
+              Text(
+                'Your rating:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: theme.colors.textPrimary,
+                ),
+              )
+            else
+              Text(
+                'How would you rate your experience?',
+                style: TextStyle(color: theme.colors.textPrimary),
+              ),
             const SizedBox(height: 8),
             RatingWidget(
-              initialRating: _conversation?.userSatisfaction ?? 0,
+              initialRating: conversation?.userSatisfaction ?? 0,
               onRatingChanged: _submitRating,
-              readOnly: _conversation?.userSatisfaction != null,
+              readOnly: hasRating,
             ),
+            if (hasRating) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Thank you for your feedback!',
+                style: TextStyle(
+                  color: theme.colors.success,
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -628,15 +682,24 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       isSending: _isSending || _isInitializingConversation,
       onSend: _sendMessage,
       onAttachment: _pickAndUploadMedia,
+      theme: theme,
+      focusNode: _inputFocusNode,
     );
   }
 
   Future<void> _submitRating(int rating) async {
     if (_conversation == null) return;
+
     try {
-      await Feeddo.instance.conversationService
+      await FeeddoInternal.instance.conversationService
           .rateConversation(_conversation!.id, rating);
+
+      // Update local conversation object immediately
       if (mounted) {
+        setState(() {
+          _conversation = _conversation!.copyWith(userSatisfaction: rating);
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thank you for your feedback!')),
         );
@@ -657,12 +720,12 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Reload conversations to be sure
-      if (Feeddo.instance.userId != null) {
-        await Feeddo.instance.conversationService
-            .loadConversations(Feeddo.instance.userId!);
+      if (FeeddoInternal.instance.userId != null) {
+        await FeeddoInternal.instance.conversationService
+            .loadConversations(FeeddoInternal.instance.userId!);
       }
 
-      final conv = Feeddo.instance.conversationService.conversations
+      final conv = FeeddoInternal.instance.conversationService.conversations
           .firstWhere((c) => c.id == conversationId);
 
       if (mounted) {
@@ -670,7 +733,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
           _conversation = conv;
           _isInitializingConversation = false;
         });
-        Feeddo.instance.conversationService
+        FeeddoInternal.instance.conversationService
             .setActiveConversationId(conversationId);
         _loadMessages();
       }
@@ -684,17 +747,11 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    final wsService = Feeddo.instance.webSocketService;
-    if (wsService == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not connected to chat server')),
-      );
-      return;
-    }
+    final wsService = FeeddoInternal.instance.webSocketService;
 
     setState(() {
       _isSending = true;
@@ -730,7 +787,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       messageData['conversationId'] = _conversation!.id;
     }
 
-    wsService.send(messageData);
+    await wsService.send(messageData);
 
     setState(() {
       _isSending = false;

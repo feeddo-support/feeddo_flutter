@@ -7,7 +7,7 @@ class WebSocketService {
   WebSocket? _webSocket;
   final String baseUrl;
   final String apiKey;
-  final String userId;
+  String? _userId;
   bool _isDisposed = false;
 
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
@@ -16,13 +16,13 @@ class WebSocketService {
   WebSocketService({
     required this.baseUrl,
     required this.apiKey,
-    required this.userId,
   });
 
   String? _currentConversationId;
 
-  Future<void> connect({String? conversationId}) async {
-    if (_isDisposed) return;
+  Future<void> connect({required String userId, String? conversationId}) async {
+    _isDisposed = false;
+    _userId = userId;
 
     // If connected and conversationId matches (or both null), do nothing
     if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
@@ -86,24 +86,40 @@ class WebSocketService {
   }
 
   void _reconnect() {
-    if (_isDisposed) return;
+    if (_isDisposed || _userId == null) return;
 
     // Simple reconnection logic
     Future.delayed(const Duration(seconds: 5), () {
       if (!_isDisposed &&
           (_webSocket == null || _webSocket!.readyState != WebSocket.open)) {
-        connect();
+        connect(userId: _userId!, conversationId: _currentConversationId);
       }
     });
   }
 
-  void send(Map<String, dynamic> message) {
+  Future<void> send(Map<String, dynamic> message) async {
+    // If not connected, try to connect first
+    if (_webSocket == null || _webSocket!.readyState != WebSocket.open) {
+      if (_userId == null) {
+        debugPrint('WebSocket: Cannot send message - userId not set');
+        return;
+      }
+
+      debugPrint(
+          'WebSocket: Not connected, connecting before sending message...');
+      await connect(userId: _userId!, conversationId: _currentConversationId);
+
+      // Wait a bit for connection to establish
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    // Now try to send
     if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
       final encoded = jsonEncode(message);
       debugPrint('WebSocket: Sending: $encoded');
       _webSocket!.add(encoded);
     } else {
-      debugPrint('WebSocket: Not connected, cannot send message');
+      debugPrint('WebSocket: Failed to connect, cannot send message');
     }
   }
 

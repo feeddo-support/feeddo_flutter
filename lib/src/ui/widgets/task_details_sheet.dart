@@ -1,30 +1,40 @@
 import 'package:flutter/material.dart';
 import '../../feeddo_client.dart';
 import '../../models/task.dart';
+import '../../theme/feeddo_theme.dart';
+import '../screens/feeddo_chat_screen.dart';
 import 'chat_input_area.dart';
 
 class TaskDetailsSheet extends StatefulWidget {
   final String? taskId;
   final Task? task;
   final Function(Task)? onTaskUpdated;
+  final FeeddoTheme? theme;
 
   const TaskDetailsSheet({
     Key? key,
     this.taskId,
     this.task,
     this.onTaskUpdated,
+    this.theme,
   })  : assert(taskId != null || task != null,
             'Either taskId or task must be provided'),
         super(key: key);
 
   static Future<void> show(BuildContext context,
-      {String? taskId, Task? task, Function(Task)? onTaskUpdated}) {
+      {String? taskId,
+      Task? task,
+      Function(Task)? onTaskUpdated,
+      FeeddoTheme? theme}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TaskDetailsSheet(
-          taskId: taskId, task: task, onTaskUpdated: onTaskUpdated),
+          taskId: taskId,
+          task: task,
+          onTaskUpdated: onTaskUpdated,
+          theme: theme),
     );
   }
 
@@ -38,10 +48,12 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
   String? _error;
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmittingComment = false;
+  late FeeddoTheme _theme;
 
   @override
   void initState() {
     super.initState();
+    _theme = widget.theme ?? FeeddoTheme.light();
     if (widget.task != null) {
       _task = widget.task;
       _isLoading = false;
@@ -63,7 +75,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
         });
       }
 
-      final task = await Feeddo.instance.getTask(taskId);
+      final task = await FeeddoInternal.instance.apiService
+          .getTask(taskId, userId: FeeddoInternal.instance.userId);
       if (mounted) {
         setState(() {
           _task = task;
@@ -90,9 +103,9 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: _theme.colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
@@ -103,7 +116,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: _theme.colors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -121,7 +134,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+          child: CircularProgressIndicator(color: _theme.colors.primary));
     }
 
     if (_error != null) {
@@ -130,7 +144,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Failed to load task',
-                style: TextStyle(color: Colors.red.shade700)),
+                style: TextStyle(color: _theme.colors.error)),
             TextButton(
               onPressed: _loadTask,
               child: const Text('Retry'),
@@ -141,7 +155,9 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
     }
 
     if (_task == null) {
-      return const Center(child: Text('Task not found'));
+      return Center(
+          child: Text('Task not found',
+              style: TextStyle(color: _theme.colors.textPrimary)));
     }
 
     final task = _task!;
@@ -161,19 +177,21 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
               task.type.toUpperCase(),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade600,
+                color: _theme.colors.textSecondary,
               ),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: _theme.colors.background,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 task.status.toUpperCase(),
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: _theme.colors.textPrimary),
               ),
             ),
           ],
@@ -181,9 +199,10 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
         const SizedBox(height: 16),
         Text(
           task.title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            color: _theme.colors.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -191,7 +210,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
           task.description,
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey.shade800,
+            color: _theme.colors.textSecondary,
             height: 1.5,
           ),
         ),
@@ -216,12 +235,32 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
             ),
           ],
         ),
+        if (task.isOwner && task.conversationId != null) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _openConversation(task.conversationId!),
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+              label: const Text('View Conversation'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _theme.colors.primary,
+                foregroundColor: _theme.isDark ? Colors.black : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 32),
-        const Text(
+        Text(
           'Comments',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
+            color: _theme.colors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -231,7 +270,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'No comments yet',
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: _theme.colors.textSecondary),
               ),
             ),
           )
@@ -240,9 +279,9 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: _theme.colors.background,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: _theme.colors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,23 +309,25 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
                               (comment.userType == 'developer'
                                   ? 'Developer'
                                   : 'User'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
+                            color: _theme.colors.textPrimary,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           _formatDate(comment.createdAt),
                           style: TextStyle(
-                            color: Colors.grey.shade500,
+                            color: _theme.colors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(comment.content),
+                    Text(comment.content,
+                        style: TextStyle(color: _theme.colors.textPrimary)),
                   ],
                 ),
               )),
@@ -301,6 +342,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
       isSending: _isSubmittingComment,
       hintText: 'Add a comment...',
       withShadow: true,
+      theme: _theme,
       onAttachment: () {
         // TODO: Implement attachment
       },
@@ -312,7 +354,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
 
     setState(() => _isSubmittingComment = true);
     try {
-      await Feeddo.instance.addTaskComment(
+      await FeeddoInternal.instance.addTaskComment(
         _task!.id,
         _commentController.text.trim(),
       );
@@ -421,7 +463,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
     widget.onTaskUpdated?.call(optimisticTask);
 
     try {
-      final result = await Feeddo.instance.voteTask(_task!.id, newMyVote);
+      final result =
+          await FeeddoInternal.instance.voteTask(_task!.id, newMyVote);
 
       // Update with server response if needed
       final serverUpvoteCount = result['upvoteCount'] as int?;
@@ -454,5 +497,33 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
   String _formatDate(int timestamp) {
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  Future<void> _openConversation(String conversationId) async {
+    try {
+      // Fetch the conversation
+      final conversations =
+          FeeddoInternal.instance.conversationService.conversations;
+      final conversation = conversations.firstWhere(
+        (c) => c.id == conversationId,
+        orElse: () => throw Exception('Conversation not found'),
+      );
+
+      if (!mounted) return;
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => FeeddoChatScreen(
+            conversation: conversation,
+            theme: _theme,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open conversation: $e')),
+      );
+    }
   }
 }

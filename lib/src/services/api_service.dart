@@ -406,6 +406,8 @@ class ApiService {
     final uri =
         Uri.parse('$apiUrl/tasks').replace(queryParameters: queryParams);
 
+    print(uri.toString());
+
     try {
       final response = await _client.get(
         uri,

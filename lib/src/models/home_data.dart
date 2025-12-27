@@ -1,5 +1,6 @@
 import 'task.dart';
 import 'ticket.dart';
+import 'conversation.dart';
 
 class HomeData {
   final bool hasConversation;
@@ -9,6 +10,7 @@ class HomeData {
   final String? chatbotName;
   final Ticket? recentTicket;
   final Task? recentTask;
+  final Conversation? recentConversation;
 
   HomeData({
     required this.hasConversation,
@@ -18,6 +20,7 @@ class HomeData {
     this.chatbotName,
     this.recentTicket,
     this.recentTask,
+    this.recentConversation,
   });
 
   factory HomeData.fromJson(Map<String, dynamic> json) {
@@ -32,6 +35,9 @@ class HomeData {
           : null,
       recentTask:
           json['recentTask'] != null ? Task.fromJson(json['recentTask']) : null,
+      recentConversation: json['recentConversation'] != null
+          ? Conversation.fromJson(json['recentConversation'])
+          : null,
     );
   }
 }

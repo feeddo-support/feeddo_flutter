@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../theme/feeddo_theme.dart';
 
 class RatingWidget extends StatefulWidget {
   final int initialRating;
   final ValueChanged<int> onRatingChanged;
   final bool readOnly;
+  final FeeddoTheme? theme;
 
   const RatingWidget({
     super.key,
     this.initialRating = 0,
     required this.onRatingChanged,
     this.readOnly = false,
+    this.theme,
   });
 
   @override
@@ -35,6 +38,7 @@ class _RatingWidgetState extends State<RatingWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final currentTheme = widget.theme ?? FeeddoTheme.light();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {

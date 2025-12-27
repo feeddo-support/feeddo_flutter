@@ -29,7 +29,6 @@ class FeeddoDemo extends StatefulWidget {
 }
 
 class _FeeddoDemoState extends State<FeeddoDemo> {
-  String? _userId;
   String _status = 'Ready to initialize';
   bool _isLoading = false;
 
@@ -49,10 +48,15 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-          apiKey: 'fdo_193677f5d3fd43e2ba1ff9da4a53b658', userName: 'Subhadip');
+        apiKey: 'fdo_6d4665ccb4194536b6ce6630f22060c7',
+        context: context,
+        notificationDuration: Duration(seconds: 10),
+      );
+
+      int count = Feeddo.unreadMessageCount;
+      debugPrint('Initial unread message count: $count');
 
       setState(() {
-        _userId = userId;
         _status = 'Feeddo initialized!\nUser ID: $userId';
         _isLoading = false;
       });
@@ -74,6 +78,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(
         apiKey: 'demo-api-key',
+        context: context,
         externalUserId: 'user-12345',
         userName: 'John Doe',
         email: 'john.doe@example.com',
@@ -85,7 +90,6 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       );
 
       setState(() {
-        _userId = userId;
         _status = 'User initialized!\nUser ID: $userId';
         _isLoading = false;
       });
@@ -162,7 +166,6 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       );
 
       setState(() {
-        _userId = userId;
         _status = 'Custom user upserted!\nUser ID: $userId';
         _isLoading = false;
       });
@@ -177,7 +180,6 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
   /// Clear user - Not available in simplified API
   Future<void> _clearUser() async {
     setState(() {
-      _userId = null;
       _status =
           'Note: Clear user not available.\nUser data persists in SharedPreferences.';
     });
@@ -298,7 +300,8 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () => Feeddo.show(context),
+                onPressed: () =>
+                    Feeddo.show(context, theme: FeeddoTheme.dark()),
                 icon: const Icon(Icons.chat),
                 label: const Text('Open Support (Default Dark)'),
                 style: ElevatedButton.styleFrom(

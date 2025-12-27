@@ -32,7 +32,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
 
   // Pagination
   int _page = 1;
-  final int _limit = 20;
+  final int _limit = 10;
   bool _hasMore = true;
   final ScrollController _scrollController = ScrollController();
 
@@ -76,7 +76,8 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
     }
 
     try {
-      final newTasks = await Feeddo.instance.getTasks(
+      final newTasks = await FeeddoInternal.instance.apiService.getTasks(
+        userId: FeeddoInternal.instance.userId,
         page: _page,
         limit: _limit,
         sortBy: _sortBy,
@@ -102,7 +103,16 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          if (refresh) {
+            _error = e.toString();
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to load more tasks: ${e.toString()}'),
+                backgroundColor: _theme.colors.error,
+              ),
+            );
+          }
           _isLoading = false;
           _isLoadingMore = false;
         });
@@ -118,7 +128,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
           conversation: null,
           theme: _theme,
           initialMessage:
-              'Describe about any bug or feature you would like to report.\nI will create it for you!',
+              'Describe about any feature you want to see in our app or report a bug.\nI will create it for you!',
         ),
       ),
     );
@@ -129,7 +139,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
   void _showFilterSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: _theme.colors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -140,18 +150,21 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Filter & Sort',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: _theme.colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 24),
 
               // Sort By
-              const Text('Sort By',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
+              Text('Sort By',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _theme.colors.textPrimary)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -176,7 +189,10 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
               const SizedBox(height: 24),
 
               // Type
-              const Text('Type', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text('Type',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: _theme.colors.textPrimary)),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -213,14 +229,16 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Show created by me only',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Show created by me only',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: _theme.colors.textPrimary)),
                   Switch(
                     value: _showMyTasksOnly,
                     onChanged: (value) {
                       setSheetState(() => _showMyTasksOnly = value);
                     },
-                    activeColor: Colors.black,
+                    activeThumbColor: _theme.colors.primary,
                   ),
                 ],
               ),
@@ -235,8 +253,9 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                     _loadTasks(refresh: true);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+                    backgroundColor: _theme.colors.primary,
+                    foregroundColor:
+                        _theme.isDark ? Colors.black : Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -261,17 +280,19 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
       label: Text(label),
       selected: selected,
       onSelected: onSelected,
-      backgroundColor: Colors.grey[100],
-      selectedColor: Colors.black,
+      backgroundColor: _theme.colors.background,
+      selectedColor: _theme.colors.primary,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : Colors.black,
+        color: selected
+            ? (_theme.isDark ? Colors.black : Colors.white)
+            : _theme.colors.textPrimary,
         fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
       ),
-      checkmarkColor: Colors.white,
+      checkmarkColor: _theme.isDark ? Colors.black : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
-          color: selected ? Colors.black : Colors.grey[300]!,
+          color: selected ? _theme.colors.primary : _theme.colors.border,
         ),
       ),
     );
@@ -280,28 +301,29 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _theme.colors.background,
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FloatingActionButton(
           onPressed: _createNewTask,
-          backgroundColor: Colors.black,
+          backgroundColor: _theme.colors.primary,
           shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white),
+          child: Icon(Icons.add,
+              color: _theme.isDark ? Colors.black : Colors.white),
         ),
       ),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _theme.colors.appBarBackground,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Features & Bugs',
           style: TextStyle(
-            color: Colors.black,
+            color: _theme.colors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
@@ -310,7 +332,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
           IconButton(
             icon: Stack(
               children: [
-                const Icon(Icons.filter_list, color: Colors.black),
+                Icon(Icons.filter_list, color: _theme.colors.iconColor),
                 if (_filterType != null ||
                     _showMyTasksOnly ||
                     _sortBy != 'time')
@@ -320,8 +342,8 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                     child: Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
+                      decoration: BoxDecoration(
+                        color: _theme.colors.error,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -335,13 +357,14 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Divider(
             height: 1,
-            color: Colors.grey.withOpacity(0.1),
+            color: _theme.colors.divider.withOpacity(0.1),
           ),
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.black))
-          : _error != null
+          ? Center(
+              child: CircularProgressIndicator(color: _theme.colors.primary))
+          : _error != null && _tasks.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -349,7 +372,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('Error: $_error',
-                            style: const TextStyle(color: Colors.black)),
+                            style: TextStyle(color: _theme.colors.textPrimary)),
                         TextButton(
                           onPressed: () => _loadTasks(refresh: true),
                           child: const Text('Retry'),
@@ -363,8 +386,9 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text('No tasks found',
-                              style: TextStyle(color: Colors.black)),
+                          Text('No tasks found',
+                              style:
+                                  TextStyle(color: _theme.colors.textPrimary)),
                           if (_filterType != null || _showMyTasksOnly)
                             TextButton(
                               onPressed: () {
@@ -382,7 +406,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                     )
                   : RefreshIndicator(
                       onRefresh: () => _loadTasks(refresh: true),
-                      color: Colors.black,
+                      color: _theme.colors.primary,
                       child: ListView.separated(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(16),
@@ -391,12 +415,12 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           if (index == _tasks.length) {
-                            return const Center(
+                            return Center(
                               child: Padding(
-                                padding: EdgeInsets.all(16.0),
+                                padding: const EdgeInsets.all(16.0),
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.black,
+                                  color: _theme.colors.primary,
                                 ),
                               ),
                             );
@@ -404,10 +428,12 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                           final task = _tasks[index];
                           return TaskCard(
                             task: task,
+                            theme: _theme,
                             onTap: () {
                               TaskDetailsSheet.show(
                                 context,
                                 task: task,
+                                theme: _theme,
                                 onTaskUpdated: (updatedTask) {
                                   setState(() {
                                     _tasks[index] = updatedTask;

@@ -27,15 +27,17 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
     _loadConversations();
 
     // Listen to conversation service updates
-    Feeddo.instance.conversationService.addListener(_onConversationsUpdated);
+    FeeddoInternal.instance.conversationService
+        .addListener(_onConversationsUpdated);
 
     // Connect to WebSocket generally (no specific conversation) to receive updates
-    Feeddo.instance.connectWebSocket();
+    FeeddoInternal.instance.connectWebSocket();
   }
 
   @override
   void dispose() {
-    Feeddo.instance.conversationService.removeListener(_onConversationsUpdated);
+    FeeddoInternal.instance.conversationService
+        .removeListener(_onConversationsUpdated);
     super.dispose();
   }
 
@@ -47,7 +49,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
 
   Future<void> _loadConversations() async {
     try {
-      await Feeddo.getConversations();
+      await FeeddoInternal.getConversations();
     } catch (e) {
       // Error handled in service
     }
@@ -82,66 +84,61 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final service = Feeddo.instance.conversationService;
+    final service = FeeddoInternal.instance.conversationService;
     final conversations = service.conversations;
     final isLoading = service.isLoading;
     final error = service.error;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: _theme.colors.background,
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
         child: FloatingActionButton(
           onPressed: _createNewConversation,
-          backgroundColor: Colors.black,
+          backgroundColor: _theme.colors.primary,
           shape: const CircleBorder(),
-          child: const Icon(Icons.edit, color: Colors.white),
+          child: Icon(Icons.edit,
+              color: _theme.isDark ? Colors.black : Colors.white),
         ),
       ),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: _theme.colors.appBarBackground,
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Messages',
           style: TextStyle(
-            color: Colors.black,
+            color: _theme.colors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 20,
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            color: Colors.grey.withOpacity(0.1),
-          ),
-        ),
       ),
       body: isLoading && conversations.isEmpty
-          ? const Center(child: CircularProgressIndicator(color: Colors.black))
+          ? Center(
+              child: CircularProgressIndicator(color: _theme.colors.primary))
           : error != null && conversations.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text('Error: $error',
-                        style: const TextStyle(color: Colors.black)),
+                        style: TextStyle(color: _theme.colors.textPrimary)),
                   ),
                 )
               : conversations.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('No messages yet',
-                          style: TextStyle(color: Colors.black)))
+                          style: TextStyle(color: _theme.colors.textPrimary)))
                   : ListView.separated(
                       itemCount: conversations.length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
                         indent: 68,
-                        color: Colors.grey.withOpacity(0.1),
+                        color: _theme.colors.divider,
                       ),
                       itemBuilder: (context, index) {
                         final conversation = conversations[index];
@@ -155,7 +152,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
     return InkWell(
       onTap: () async {
         // Mark as read locally
-        Feeddo.instance.conversationService.markAsRead(conversation.id);
+        FeeddoInternal.instance.conversationService.markAsRead(conversation.id);
 
         await Navigator.of(context).push(
           MaterialPageRoute(
@@ -173,13 +170,13 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
             // Avatar
             CircleAvatar(
               radius: 20,
-              backgroundColor: Colors.blue.shade100,
+              backgroundColor: _theme.colors.primary.withOpacity(0.1),
               child: Text(
                 (conversation.displayName ?? conversation.title ?? '?')
                     .substring(0, 1)
                     .toUpperCase(),
                 style: TextStyle(
-                  color: Colors.blue.shade900,
+                  color: _theme.colors.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -200,10 +197,10 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
                           conversation.displayName ??
                               conversation.title ??
                               'Conversation',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: Colors.black,
+                            color: _theme.colors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -212,7 +209,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
                       Text(
                         _formatDate(conversation.lastMessageAt),
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: _theme.colors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
@@ -226,7 +223,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
                         child: Text(
                           conversation.lastMessagePreview ?? 'No messages',
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: _theme.colors.textSecondary,
                             fontSize: 14,
                           ),
                           maxLines: 1,
@@ -253,11 +250,22 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
                       ],
                     ],
                   ),
-                  // Status Indicators (Ticket/Task)
-                  if (conversation.hasTicket || conversation.hasTask) ...[
+                  // Status Indicators (Resolved/Ticket/Task)
+                  if (conversation.status == 'resolved' ||
+                      conversation.hasTicket ||
+                      conversation.hasTask) ...[
                     const SizedBox(height: 6),
                     Row(
                       children: [
+                        if (conversation.status == 'resolved')
+                          _buildStatusChip(
+                            'Resolved',
+                            _theme.colors.success,
+                            Icons.check_circle_outline,
+                          ),
+                        if (conversation.status == 'resolved' &&
+                            (conversation.hasTicket || conversation.hasTask))
+                          const SizedBox(width: 8),
                         if (conversation.hasTicket)
                           _buildStatusChip(
                             'Ticket: ${conversation.ticketStatus ?? "Open"}',

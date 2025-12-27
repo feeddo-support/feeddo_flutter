@@ -15,6 +15,8 @@ class FeeddoColors {
   final Color success;
   final Color error;
   final Color border;
+  final Color divider;
+  final Color appBarBackground;
 
   const FeeddoColors({
     this.background = const Color(0xFF000000),
@@ -31,6 +33,8 @@ class FeeddoColors {
     this.success = const Color(0xFF4CAF50),
     this.error = const Color(0xFFF44336),
     this.border = const Color(0xFFE0E0E0),
+    this.divider = const Color(0xFFBDBDBD),
+    this.appBarBackground = const Color(0xFF000000),
   });
 
   FeeddoColors copyWith({
@@ -48,24 +52,27 @@ class FeeddoColors {
     Color? success,
     Color? error,
     Color? border,
+    Color? divider,
+    Color? appBarBackground,
   }) {
     return FeeddoColors(
-      background: background ?? this.background,
-      backgroundGradient: backgroundGradient ?? this.backgroundGradient,
-      backgroundGradientStops:
-          backgroundGradientStops ?? this.backgroundGradientStops,
-      textPrimary: textPrimary ?? this.textPrimary,
-      textSecondary: textSecondary ?? this.textSecondary,
-      cardBackground: cardBackground ?? this.cardBackground,
-      cardText: cardText ?? this.cardText,
-      iconColor: iconColor ?? this.iconColor,
-      closeButtonColor: closeButtonColor ?? this.closeButtonColor,
-      primary: primary ?? this.primary,
-      surface: surface ?? this.surface,
-      success: success ?? this.success,
-      error: error ?? this.error,
-      border: border ?? this.border,
-    );
+        background: background ?? this.background,
+        backgroundGradient: backgroundGradient ?? this.backgroundGradient,
+        backgroundGradientStops:
+            backgroundGradientStops ?? this.backgroundGradientStops,
+        textPrimary: textPrimary ?? this.textPrimary,
+        textSecondary: textSecondary ?? this.textSecondary,
+        cardBackground: cardBackground ?? this.cardBackground,
+        cardText: cardText ?? this.cardText,
+        iconColor: iconColor ?? this.iconColor,
+        closeButtonColor: closeButtonColor ?? this.closeButtonColor,
+        primary: primary ?? this.primary,
+        surface: surface ?? this.surface,
+        success: success ?? this.success,
+        error: error ?? this.error,
+        border: border ?? this.border,
+        divider: divider ?? this.divider,
+        appBarBackground: appBarBackground ?? this.appBarBackground);
   }
 }
 
@@ -81,50 +88,45 @@ class FeeddoTheme {
   factory FeeddoTheme.dark() {
     return const FeeddoTheme(
       colors: FeeddoColors(
-        backgroundGradient: [
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFFFFFFFF),
-          Color(0xFFFFFFFF),
-        ],
-        backgroundGradientStops: [0.0, 0.3, 0.7, 1.0],
-        textPrimary: Color(0xFFFFFFFF),
-        textSecondary: Color(0xFFB3B3B3),
-        cardBackground: Color(0xFFFFFFFF),
-        cardText: Color(0xFF000000),
-        iconColor: Color(0xFF000000),
-        closeButtonColor: Color(0xFFFFFFFF),
-        primary: Color(0xFF2196F3),
-        surface: Color(0xFFFFFFFF),
-        success: Color(0xFF4CAF50),
-        error: Color(0xFFF44336),
-        border: Color(0xFFE0E0E0),
+        background: Color(0xFF09090B),
+        backgroundGradient: null,
+        backgroundGradientStops: null,
+        textPrimary: Color(0xFFFAFAFA),
+        textSecondary: Color(0xFFA1A1AA),
+        cardBackground: Color(0xFF18181B),
+        cardText: Color(0xFFFAFAFA),
+        iconColor: Color(0xFFA1A1AA),
+        closeButtonColor: Color(0xFFFAFAFA),
+        primary: Color(0xFFFFFFFF),
+        surface: Color(0xFF18181B),
+        success: Color(0xFF22C55E),
+        error: Color(0xFFEF4444),
+        border: Color(0xFF27272A),
+        divider: Color.fromARGB(255, 26, 26, 26),
+        appBarBackground: Color.fromARGB(255, 0, 0, 0),
       ),
       isDark: true,
     );
   }
-
   factory FeeddoTheme.light() {
     return const FeeddoTheme(
       colors: FeeddoColors(
-        backgroundGradient: [
-          Color(0xFF000000),
-          Color(0xFF000000),
-          Color(0xFFFFFFFF),
-          Color(0xFFFFFFFF),
-        ],
-        backgroundGradientStops: [0.0, 0.3, 0.7, 1.0],
-        textPrimary: Color(0xFFFFFFFF),
-        textSecondary: Color(0xFFB3B3B3),
+        background: Color.fromARGB(255, 251, 251, 251),
+        backgroundGradient: null,
+        backgroundGradientStops: null,
+        textPrimary: Color(0xFF111827),
+        textSecondary: Color(0xFF4B5563),
         cardBackground: Color(0xFFFFFFFF),
-        cardText: Color(0xFF000000),
-        iconColor: Color(0xFF000000),
-        closeButtonColor: Color(0xFFFFFFFF),
-        primary: Color(0xFF2196F3),
+        cardText: Color(0xFF111827),
+        iconColor: Color(0xFF4B5563),
+        closeButtonColor: Color(0xFF111827),
+        primary: Color.fromARGB(255, 0, 0, 0),
         surface: Color(0xFFFFFFFF),
-        success: Color(0xFF4CAF50),
-        error: Color(0xFFF44336),
-        border: Color(0xFFE0E0E0),
+        success: Color(0xFF10B981),
+        error: Color(0xFFEF4444),
+        border: Color(0xFFE5E7EB),
+        divider: Color(0xFFE5E7EB),
+        appBarBackground: Color.fromARGB(255, 255, 255, 255),
       ),
       isDark: false,
     );

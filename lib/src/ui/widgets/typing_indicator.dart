@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../theme/feeddo_theme.dart';
 
 class TypingIndicator extends StatefulWidget {
-  final Color color;
+  final Color? color;
   final double size;
+  final FeeddoTheme? theme;
 
   const TypingIndicator({
     Key? key,
-    required this.color,
+    this.color,
     this.size = 6.0,
+    this.theme,
   }) : super(key: key);
 
   @override
@@ -55,6 +58,8 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
+    final currentTheme = widget.theme ?? FeeddoTheme.light();
+    final indicatorColor = widget.color ?? currentTheme.colors.textSecondary;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(3, (index) {
@@ -71,7 +76,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
                 0,
               ),
               decoration: BoxDecoration(
-                color: widget.color
+                color: indicatorColor
                     .withOpacity(0.4 + (0.6 * _animations[index].value)),
                 shape: BoxShape.circle,
               ),

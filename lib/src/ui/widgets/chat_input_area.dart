@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/feeddo_theme.dart';
 
 class ChatInputArea extends StatelessWidget {
   final TextEditingController controller;
@@ -7,6 +8,8 @@ class ChatInputArea extends StatelessWidget {
   final bool isSending;
   final String hintText;
   final bool withShadow;
+  final FeeddoTheme? theme;
+  final FocusNode? focusNode;
 
   const ChatInputArea({
     Key? key,
@@ -16,10 +19,14 @@ class ChatInputArea extends StatelessWidget {
     this.isSending = false,
     this.hintText = 'Type a message...',
     this.withShadow = false,
+    this.theme,
+    this.focusNode,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final currentTheme = theme ?? FeeddoTheme.light();
+
     return Container(
       padding: EdgeInsets.only(
         left: 16,
@@ -28,8 +35,8 @@ class ChatInputArea extends StatelessWidget {
         bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        color: currentTheme.colors.surface,
+        border: Border(top: BorderSide(color: currentTheme.colors.border)),
         boxShadow: withShadow
             ? [
                 BoxShadow(
@@ -46,28 +53,30 @@ class ChatInputArea extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: currentTheme.colors.background,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: currentTheme.colors.border),
               ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.attach_file,
-                        color: Colors.grey, size: 20),
+                    icon: Icon(Icons.attach_file,
+                        color: currentTheme.colors.iconColor, size: 20),
                     onPressed: onAttachment,
                   ),
                   Expanded(
                     child: TextField(
                       controller: controller,
+                      focusNode: focusNode,
                       decoration: InputDecoration(
                         hintText: hintText,
-                        hintStyle: const TextStyle(color: Colors.grey),
+                        hintStyle:
+                            TextStyle(color: currentTheme.colors.textSecondary),
                         border: InputBorder.none,
                         contentPadding:
                             const EdgeInsets.symmetric(vertical: 12),
                       ),
-                      style: const TextStyle(color: Colors.black),
+                      style: TextStyle(color: currentTheme.colors.textPrimary),
                     ),
                   ),
                 ],
@@ -78,21 +87,22 @@ class ChatInputArea extends StatelessWidget {
           Container(
             height: 40,
             width: 40,
-            decoration: const BoxDecoration(
-              color: Colors.black,
+            decoration: BoxDecoration(
+              color: currentTheme.colors.primary,
               shape: BoxShape.circle,
             ),
             child: isSending
-                ? const Padding(
-                    padding: EdgeInsets.all(10.0),
+                ? Padding(
+                    padding: const EdgeInsets.all(10.0),
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          currentTheme.colors.surface),
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(Icons.arrow_upward,
-                        color: Colors.white, size: 17),
+                    icon: Icon(Icons.arrow_upward,
+                        color: currentTheme.colors.surface, size: 17),
                     onPressed: onSend,
                   ),
           ),

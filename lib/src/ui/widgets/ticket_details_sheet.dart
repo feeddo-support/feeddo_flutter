@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import '../../feeddo_client.dart';
 import '../../models/ticket.dart';
+import '../../theme/feeddo_theme.dart';
+import '../screens/feeddo_chat_screen.dart';
 
 class TicketDetailsSheet extends StatefulWidget {
   final String? ticketId;
   final Ticket? ticket;
+  final FeeddoTheme? theme;
 
   const TicketDetailsSheet({
     Key? key,
     this.ticketId,
     this.ticket,
+    this.theme,
   })  : assert(ticketId != null || ticket != null,
             'Either ticketId or ticket must be provided'),
         super(key: key);
 
   static Future<void> show(BuildContext context,
-      {String? ticketId, Ticket? ticket}) {
+      {String? ticketId, Ticket? ticket, FeeddoTheme? theme}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
-          TicketDetailsSheet(ticketId: ticketId, ticket: ticket),
+          TicketDetailsSheet(ticketId: ticketId, ticket: ticket, theme: theme),
     );
   }
 
@@ -33,10 +37,12 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
   Ticket? _ticket;
   bool _isLoading = true;
   String? _error;
+  late FeeddoTheme _theme;
 
   @override
   void initState() {
     super.initState();
+    _theme = widget.theme ?? FeeddoTheme.light();
     if (widget.ticket != null) {
       _ticket = widget.ticket;
       _isLoading = false;
@@ -58,7 +64,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
         });
       }
 
-      final ticket = await Feeddo.instance.getTicket(ticketId);
+      final ticket = await FeeddoInternal.instance.getTicket(ticketId);
       if (mounted) {
         setState(() {
           _ticket = ticket;
@@ -79,9 +85,9 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: _theme.colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
@@ -92,7 +98,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: _theme.colors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -108,7 +114,8 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+          child: CircularProgressIndicator(color: _theme.colors.primary));
     }
 
     if (_error != null) {
@@ -117,7 +124,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Failed to load ticket',
-                style: TextStyle(color: Colors.red.shade700)),
+                style: TextStyle(color: _theme.colors.error)),
             TextButton(
               onPressed: _loadTicket,
               child: const Text('Retry'),
@@ -128,7 +135,9 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
     }
 
     if (_ticket == null) {
-      return const Center(child: Text('Ticket not found'));
+      return Center(
+          child: Text('Ticket not found',
+              style: TextStyle(color: _theme.colors.textPrimary)));
     }
 
     final ticket = _ticket!;
@@ -141,7 +150,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           children: [
             Icon(
               Icons.confirmation_number,
-              color: Colors.blue.shade600,
+              color: Colors.blue,
               size: 24,
             ),
             const SizedBox(width: 8),
@@ -149,7 +158,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
               'SUPPORT TICKET',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade600,
+                color: _theme.colors.textSecondary,
                 fontSize: 14,
               ),
             ),
@@ -158,13 +167,13 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: ticket.isResolved
-                    ? Colors.green.shade50
-                    : Colors.orange.shade50,
+                    ? _theme.colors.success.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: ticket.isResolved
-                      ? Colors.green.shade200
-                      : Colors.orange.shade200,
+                      ? _theme.colors.success.withOpacity(0.2)
+                      : Colors.orange.withOpacity(0.2),
                 ),
               ),
               child: Row(
@@ -173,7 +182,9 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
                   Icon(
                     ticket.isResolved ? Icons.check_circle : Icons.pending,
                     size: 14,
-                    color: ticket.isResolved ? Colors.green : Colors.orange,
+                    color: ticket.isResolved
+                        ? _theme.colors.success
+                        : Colors.orange,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -181,7 +192,9 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
-                      color: ticket.isResolved ? Colors.green : Colors.orange,
+                      color: ticket.isResolved
+                          ? _theme.colors.success
+                          : Colors.orange,
                     ),
                   ),
                 ],
@@ -192,9 +205,10 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
         const SizedBox(height: 24),
         Text(
           ticket.title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
+            color: _theme.colors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -202,51 +216,8 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           ticket.description,
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey.shade800,
+            color: _theme.colors.textSecondary,
             height: 1.6,
-          ),
-        ),
-        const SizedBox(height: 24),
-        // Priority Badge
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _getPriorityColor(ticket.priority).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _getPriorityColor(ticket.priority).withOpacity(0.3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                _getPriorityIcon(ticket.priority),
-                color: _getPriorityColor(ticket.priority),
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Priority',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    ticket.priority.toUpperCase(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getPriorityColor(ticket.priority),
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -255,18 +226,18 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: Colors.blue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                const Icon(Icons.info_outline, color: Colors.blue, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Our support team is working on your ticket and will respond soon.',
                     style: TextStyle(
-                      color: Colors.blue.shade900,
+                      color: _theme.colors.textPrimary,
                       fontSize: 14,
                     ),
                   ),
@@ -274,35 +245,54 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
               ],
             ),
           ),
+        if (ticket.isOwner && ticket.conversationId != null) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _openConversation(ticket.conversationId!),
+              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+              label: const Text('View Conversation'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _theme.colors.primary,
+                foregroundColor: _theme.isDark ? Colors.black : Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-      case 'urgent':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
+  Future<void> _openConversation(String conversationId) async {
+    try {
+      // Fetch the conversation
+      final conversations =
+          FeeddoInternal.instance.conversationService.conversations;
+      final conversation = conversations.firstWhere(
+        (c) => c.id == conversationId,
+        orElse: () => throw Exception('Conversation not found'),
+      );
 
-  IconData _getPriorityIcon(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-      case 'urgent':
-        return Icons.priority_high;
-      case 'medium':
-        return Icons.remove;
-      case 'low':
-        return Icons.arrow_downward;
-      default:
-        return Icons.label;
+      if (!mounted) return;
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => FeeddoChatScreen(
+            conversation: conversation,
+            theme: _theme,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open conversation: $e')),
+      );
     }
   }
 }

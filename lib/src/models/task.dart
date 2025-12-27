@@ -11,6 +11,8 @@ class Task {
   final int commentCount;
   final String? myVote;
   final List<TaskComment> comments;
+  final bool isOwner;
+  final String? conversationId;
 
   Task({
     required this.id,
@@ -23,6 +25,8 @@ class Task {
     required this.commentCount,
     this.myVote,
     this.comments = const [],
+    this.isOwner = false,
+    this.conversationId,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,8 @@ class Task {
       commentCount: json['commentCount'] ?? 0,
       myVote: json['myVote'],
       comments: commentsList,
+      isOwner: json['isOwner'] ?? false,
+      conversationId: json['conversationId'],
     );
   }
 
@@ -59,6 +65,8 @@ class Task {
     int? commentCount,
     String? myVote,
     List<TaskComment>? comments,
+    bool? isOwner,
+    String? conversationId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -71,6 +79,8 @@ class Task {
       commentCount: commentCount ?? this.commentCount,
       myVote: myVote ?? this.myVote,
       comments: comments ?? this.comments,
+      isOwner: isOwner ?? this.isOwner,
+      conversationId: conversationId ?? this.conversationId,
     );
   }
 }

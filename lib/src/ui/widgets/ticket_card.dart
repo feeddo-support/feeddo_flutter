@@ -1,29 +1,33 @@
 import 'package:flutter/material.dart';
 import '../../models/ticket.dart';
+import '../../theme/feeddo_theme.dart';
 import 'ticket_details_sheet.dart';
 
 class TicketCard extends StatelessWidget {
   final Ticket ticket;
   final VoidCallback? onTap;
+  final FeeddoTheme theme;
 
   const TicketCard({
     Key? key,
     required this.ticket,
     this.onTap,
+    required this.theme,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap ?? () => TicketDetailsSheet.show(context, ticket: ticket),
+      onTap: onTap ??
+          () => TicketDetailsSheet.show(context, ticket: ticket, theme: theme),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(top: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colors.cardBackground,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: theme.colors.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -45,7 +49,7 @@ class TicketCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
+                    color: theme.colors.textSecondary,
                   ),
                 ),
                 const Spacer(),
@@ -54,16 +58,23 @@ class TicketCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: ticket.isResolved
-                        ? Colors.green.shade50
-                        : Colors.orange.shade50,
+                        ? theme.colors.success.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: ticket.isResolved
+                          ? theme.colors.success.withOpacity(0.2)
+                          : Colors.orange.withOpacity(0.2),
+                    ),
                   ),
                   child: Text(
                     ticket.isResolved ? 'RESOLVED' : 'OPEN',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: ticket.isResolved ? Colors.green : Colors.orange,
+                      color: ticket.isResolved
+                          ? theme.colors.success
+                          : Colors.orange,
                     ),
                   ),
                 ),
@@ -72,10 +83,10 @@ class TicketCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               ticket.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: Colors.black87,
+                color: theme.colors.cardText,
               ),
             ),
             const SizedBox(height: 4),
@@ -83,7 +94,7 @@ class TicketCard extends StatelessWidget {
               ticket.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12, color: theme.colors.textSecondary),
             ),
           ],
         ),
