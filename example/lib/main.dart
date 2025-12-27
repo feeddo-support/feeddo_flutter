@@ -115,6 +115,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       await Feeddo.init(
+        context: context,
         apiKey: 'demo-api-key',
         userName: 'John Doe Updated',
         subscriptionStatus: 'premium',
@@ -150,6 +151,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
+        context: context,
         apiKey: 'demo-api-key',
         externalUserId: 'custom-user-456',
         userName: 'Jane Smith',
