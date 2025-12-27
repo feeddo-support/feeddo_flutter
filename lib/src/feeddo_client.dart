@@ -117,7 +117,7 @@ class FeeddoInternal {
   /// ```
   static Future<InitResult> init({
     required String apiKey,
-    BuildContext? context,
+    required BuildContext context,
     bool isInAppNotificationOn = true,
     FeeddoTheme? theme,
     Duration? notificationDuration,

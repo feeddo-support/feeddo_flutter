@@ -25,7 +25,7 @@ class Feeddo {
   /// [customAttributes]: Custom key-value data (optional)
   static Future<String> init({
     required String apiKey,
-    BuildContext context,
+    required BuildContext context,
     bool isInAppNotificationOn = true,
     FeeddoTheme? theme,
     Duration? notificationDuration,
