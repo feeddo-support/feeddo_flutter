@@ -40,3 +40,13 @@ app.*.symbols
 app.*.map.json
 
 
+/android
+/ios
+/web
+/build
+/linux
+/macos
+/windows
+firebase.json
+/lib/firebase_options.dart
+.metadata
