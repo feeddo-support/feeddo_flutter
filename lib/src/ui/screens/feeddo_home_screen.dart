@@ -10,6 +10,7 @@ import '../widgets/task_card.dart';
 import '../widgets/ticket_card.dart';
 import '../widgets/task_details_sheet.dart';
 import '../widgets/ticket_details_sheet.dart';
+import '../widgets/feeddo_notifications_sheet.dart';
 import 'feeddo_chat_screen.dart';
 
 class FeeddoHomeScreen extends StatefulWidget {
@@ -59,6 +60,21 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
         // Trigger rebuild to update unread count from conversation service
       });
     }
+  }
+
+  void _showNotifications() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: FeeddoNotificationsSheet(theme: widget.theme),
+      ),
+    ).then((_) {
+      // Refresh home data when sheet is closed to update unread count
+      _loadHomeData();
+    });
   }
 
   Future<void> _createNewConversation() async {
@@ -232,11 +248,17 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
       child: Scaffold(
         backgroundColor: widget.theme.colors.background,
         floatingActionButton: hasRecentActivity
-            ? FloatingActionButton(
-                onPressed: _createNewConversation,
-                backgroundColor: widget.theme.colors.primary,
-                child: Icon(Icons.edit,
-                    color: widget.theme.isDark ? Colors.black : Colors.white),
+            ? SizedBox(
+                width: 48,
+                height: 48,
+                child: FloatingActionButton(
+                  onPressed: _createNewConversation,
+                  backgroundColor: widget.theme.colors.primary,
+                  elevation: 4,
+                  child: Icon(Icons.edit,
+                      size: 20,
+                      color: widget.theme.isDark ? Colors.black : Colors.white),
+                ),
               )
             : null,
         body: Container(
@@ -408,6 +430,56 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                   ],
                 ),
                 Positioned(
+                  right: 74,
+                  top: 16,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color:
+                              widget.theme.colors.textPrimary.withOpacity(0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.notifications_outlined,
+                              color: widget.theme.colors.textPrimary, size: 20),
+                          onPressed: _showNotifications,
+                        ),
+                      ),
+                      if (_homeData != null &&
+                          _homeData!.unreadNotificationCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              _homeData!.unreadNotificationCount > 99
+                                  ? '99+'
+                                  : _homeData!.unreadNotificationCount
+                                      .toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Positioned(
                   right: 16,
                   top: 16,
                   child: Container(
@@ -417,7 +489,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                     ),
                     child: IconButton(
                       icon: Icon(Icons.close,
-                          color: widget.theme.colors.closeButtonColor),
+                          color: widget.theme.colors.closeButtonColor,
+                          size: 20),
                       onPressed:
                           widget.onClose ?? () => Navigator.of(context).pop(),
                     ),
@@ -520,12 +593,12 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: color, size: 22),
+                  child: Icon(icon, color: color, size: 20),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

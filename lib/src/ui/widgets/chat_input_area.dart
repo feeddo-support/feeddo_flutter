@@ -61,7 +61,7 @@ class ChatInputArea extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: Icon(Icons.attach_file,
-                        color: currentTheme.colors.iconColor, size: 20),
+                        color: currentTheme.colors.iconColor, size: 18),
                     onPressed: onAttachment,
                   ),
                   Expanded(
@@ -102,7 +102,7 @@ class ChatInputArea extends StatelessWidget {
                   )
                 : IconButton(
                     icon: Icon(Icons.arrow_upward,
-                        color: currentTheme.colors.surface, size: 17),
+                        color: currentTheme.colors.surface, size: 16),
                     onPressed: onSend,
                   ),
           ),

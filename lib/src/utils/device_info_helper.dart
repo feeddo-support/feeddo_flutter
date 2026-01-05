@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 /// Helper class to collect device and package information
 class DeviceInfoHelper {
@@ -20,28 +20,28 @@ class DeviceInfoHelper {
       final webInfo = await _deviceInfo.webBrowserInfo;
       deviceModel = '${webInfo.browserName} ${webInfo.platform}';
       osVersion = webInfo.userAgent;
-    } else if (Platform.isAndroid) {
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
       platform = 'android';
       final androidInfo = await _deviceInfo.androidInfo;
       deviceModel = '${androidInfo.manufacturer} ${androidInfo.model}';
       osVersion =
           'Android ${androidInfo.version.release} (SDK ${androidInfo.version.sdkInt})';
-    } else if (Platform.isIOS) {
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       platform = 'ios';
       final iosInfo = await _deviceInfo.iosInfo;
       deviceModel = iosInfo.model;
       osVersion = '${iosInfo.systemName} ${iosInfo.systemVersion}';
-    } else if (Platform.isMacOS) {
+    } else if (defaultTargetPlatform == TargetPlatform.macOS) {
       platform = 'desktop';
       final macInfo = await _deviceInfo.macOsInfo;
       deviceModel = 'macOS ${macInfo.model}';
       osVersion = macInfo.osRelease;
-    } else if (Platform.isWindows) {
+    } else if (defaultTargetPlatform == TargetPlatform.windows) {
       platform = 'desktop';
       final windowsInfo = await _deviceInfo.windowsInfo;
       deviceModel = 'Windows ${windowsInfo.computerName}';
       osVersion = windowsInfo.productName;
-    } else if (Platform.isLinux) {
+    } else if (defaultTargetPlatform == TargetPlatform.linux) {
       platform = 'desktop';
       final linuxInfo = await _deviceInfo.linuxInfo;
       deviceModel = 'Linux ${linuxInfo.name}';
@@ -61,7 +61,7 @@ class DeviceInfoHelper {
   /// Get locale information
   static String? getLocale() {
     try {
-      return Platform.localeName;
+      return WidgetsBinding.instance.platformDispatcher.locale.toString();
     } catch (_) {
       return null;
     }

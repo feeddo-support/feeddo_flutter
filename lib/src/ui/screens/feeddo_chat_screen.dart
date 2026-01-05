@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
@@ -145,6 +144,20 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     if (data['role'] == 'assistant' || data['role'] == 'human') {
       // New message received
       final message = Message.fromJson(data);
+
+      // Check for task/ticket updates to invalidate cache
+      if (message.content != null) {
+        final parsed = _parseMessageContent(message.content!);
+        if (parsed.taskId != null) {
+          _taskCache.remove(parsed.taskId);
+          _taskFutures.remove(parsed.taskId);
+        }
+        if (parsed.ticketId != null) {
+          _ticketCache.remove(parsed.ticketId);
+          _ticketFutures.remove(parsed.ticketId);
+        }
+      }
+
       setState(() {
         _messages.insert(0, message);
         _isTyping = false;
@@ -396,7 +409,8 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
               ),
             ),
             leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: theme.colors.iconColor),
+              icon: Icon(Icons.arrow_back,
+                  color: theme.colors.iconColor, size: 20),
               onPressed: () => Navigator.of(context).pop(_hasSentMessage),
             ),
             title: Row(
@@ -540,7 +554,6 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     if (image == null) return;
 
-    final file = File(image.path);
     final userId = FeeddoInternal.instance.userId;
 
     if (userId == null) {
@@ -558,7 +571,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     try {
       final media = await FeeddoInternal.instance.conversationService
-          .uploadMedia(file, userId);
+          .uploadMedia(image, userId);
 
       // Send message with attachment
       _sendAttachmentMessage(media);
@@ -577,8 +590,9 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
   }
 
-  Future<void> _sendAttachmentMessage(Map<String, dynamic> media) async {
+  void _sendAttachmentMessage(Map<String, dynamic> media) {
     final wsService = FeeddoInternal.instance.webSocketService;
+    if (wsService == null) return;
 
     // Optimistically add message
     final tempMessage = Message(
@@ -608,7 +622,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       messageData['conversationId'] = _conversation!.id;
     }
 
-    await wsService.send(messageData);
+    wsService.send(messageData);
   }
 
   Widget _buildInputArea(FeeddoTheme theme) {
@@ -747,11 +761,17 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
   }
 
-  Future<void> _sendMessage() async {
+  void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
     final wsService = FeeddoInternal.instance.webSocketService;
+    if (wsService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Not connected to chat server')),
+      );
+      return;
+    }
 
     setState(() {
       _isSending = true;
@@ -787,7 +807,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
       messageData['conversationId'] = _conversation!.id;
     }
 
-    await wsService.send(messageData);
+    wsService.send(messageData);
 
     setState(() {
       _isSending = false;

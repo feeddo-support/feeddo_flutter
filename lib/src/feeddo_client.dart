@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'services/api_service.dart';
 import 'services/websocket_service.dart';
 import 'services/conversation_service.dart';
 import 'models/home_data.dart';
 import 'models/end_user.dart';
 import 'models/conversation.dart';
+import 'models/push_provider.dart';
 
 import 'models/ticket.dart';
 import 'models/task_comment.dart';
@@ -49,7 +51,7 @@ class FeeddoInternal {
   // Private constructor
   FeeddoInternal._(String apiKey)
       : _apiService = ApiService(
-          apiUrl: 'https://feeddo-backend-prod.neloy-nr2.workers.dev/api',
+          apiUrl: 'https://feeddo-backend.neloy-nr2.workers.dev/api',
           apiKey: apiKey,
         ) {
     _webSocketService = WebSocketService(
@@ -127,6 +129,8 @@ class FeeddoInternal {
     String? userSegment,
     String? subscriptionStatus,
     Map<String, dynamic>? customAttributes,
+    String? pushToken,
+    FeeddoPushProvider? pushProvider,
   }) async {
     // Create singleton instance if not exists
     _instance ??= FeeddoInternal._(apiKey);
@@ -148,6 +152,8 @@ class FeeddoInternal {
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
+      pushToken: pushToken,
+      pushProvider: pushProvider,
     );
 
     // Automatically show notification if there are unread messages
@@ -186,6 +192,8 @@ class FeeddoInternal {
     String? userSegment,
     String? subscriptionStatus,
     Map<String, dynamic>? customAttributes,
+    String? pushToken,
+    FeeddoPushProvider? pushProvider,
   }) async {
     // Load cached user ID from SharedPreferences
     _cachedUserId ??= await StorageHelper.getUserId();
@@ -197,6 +205,10 @@ class FeeddoInternal {
     userSegment ??= await StorageHelper.getUserSegment();
     subscriptionStatus ??= await StorageHelper.getSubscriptionStatus();
     customAttributes ??= await StorageHelper.getCustomAttributes();
+
+    // If push token is not provided, try to get it from storage
+    // Note: We don't have storage methods for push token yet, but we can add them later if needed.
+    // For now, we rely on the caller passing it.
 
     // Collect device info
     String? platform;
@@ -227,6 +239,8 @@ class FeeddoInternal {
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
+      pushToken: pushToken,
+      pushProvider: pushProvider,
     );
 
     try {
@@ -281,6 +295,8 @@ class FeeddoInternal {
     String? userSegment,
     String? subscriptionStatus,
     Map<String, dynamic>? customAttributes,
+    String? pushToken,
+    FeeddoPushProvider? pushProvider,
   }) async {
     return await _upsertUser(
       externalUserId: externalUserId,
@@ -289,12 +305,51 @@ class FeeddoInternal {
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
+      pushToken: pushToken,
+      pushProvider: pushProvider,
     );
+  }
+
+  /// Register push token for the current user
+  Future<void> registerPushToken({
+    required String pushToken,
+    required FeeddoPushProvider pushProvider,
+  }) async {
+    // If user is not initialized, we can't register token yet
+    // But we can store it for later initialization?
+    // For now, we assume init() has been called.
+
+    if (_cachedUserId == null) {
+      // Try to get from storage
+      _cachedUserId = await StorageHelper.getUserId();
+      if (_cachedUserId == null) {
+        debugPrint('Feeddo: Cannot register push token. User not initialized.');
+        return;
+      }
+    }
+
+    try {
+      // We can use upsertUser to update just the push token
+      // Or we could add a specific endpoint in ApiService
+      // Since we updated upsertUser to handle push tokens, let's use that.
+      await _upsertUser(
+        pushToken: pushToken,
+        pushProvider: pushProvider,
+      );
+      debugPrint('Feeddo: Push token registered successfully');
+    } catch (e) {
+      debugPrint('Feeddo: Failed to register push token: $e');
+    }
   }
 
   /// Internal method to setup notification listener for WebSocket messages
   void _setupNotificationListener() {
     conversationService.onNewMessage = (conversation) {
+      // Don't show notification if we are currently viewing this conversation
+      if (conversationService.activeConversationId == conversation.id) {
+        return;
+      }
+
       if (_notificationContext != null && _isInAppNotificationOn) {
         FeeddoNotificationManager.showNotification(
           _notificationContext!,
@@ -405,57 +460,170 @@ class FeeddoInternal {
   }
 
   /// Open the Feeddo support home screen
-  static void show(BuildContext context, {FeeddoTheme? theme}) {
+  static void show(
+    BuildContext context, {
+    FeeddoTheme? theme,
+    bool useSmallWindowOnDesktop = true,
+    BoxConstraints? desktopConstraints,
+  }) {
     // Connect to WebSocket when opening the screen
     _instance?.connectWebSocket();
 
-    Navigator.of(context)
-        .push(
-      MaterialPageRoute(
-        builder: (context) => FeeddoHomeScreen(
-          theme: theme ?? FeeddoTheme.dark(),
-          onClose: () {
-            // Just pop, don't disconnect
-            Navigator.of(context).pop();
-          },
-          onMessagesTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    FeeddoMessagesScreen(theme: theme ?? FeeddoTheme.dark()),
-              ),
-            );
-          },
-          onTicketsTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    FeeddoTicketsScreen(theme: theme ?? FeeddoTheme.dark()),
-              ),
-            );
-          },
-          onFeatureRequestTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    FeeddoTasksScreen(theme: theme ?? FeeddoTheme.dark()),
-              ),
-            );
-          },
-          onSendMessageTap: () {
-            // TODO: Navigate to new message
-            debugPrint('Send message tapped');
-          },
-        ),
-        fullscreenDialog: true,
-      ),
-    )
-        .then((_) {
-      // Do not disconnect when the screen is popped to keep receiving notifications
-      // _instance?.disconnectWebSocket();
+    final effectiveTheme = theme ?? FeeddoTheme.dark();
+    final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
-      // Reconnect with no conversation ID to ensure we receive all notifications
-      _instance?.connectWebSocket(conversationId: null);
-    });
+    // Check if we are on desktop or web to reduce font size
+    final isDesktopOrWeb = kIsWeb ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux;
+
+    // Helper to wrap with text scaler if needed
+    Widget wrapWithTextScaler(Widget child, BuildContext ctx) {
+      if (isDesktopOrWeb) {
+        return MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(
+            textScaler: const TextScaler.linear(0.85),
+          ),
+          child: child,
+        );
+      }
+      return child;
+    }
+
+    if (isLargeScreen && useSmallWindowOnDesktop) {
+      final nestedNavigatorKey = GlobalKey<NavigatorState>();
+      final constraints = desktopConstraints ??
+          const BoxConstraints(maxWidth: 400, maxHeight: 600);
+
+      showDialog(
+        context: context,
+        barrierColor: Colors.transparent, // No dimming for chat widget feel
+        builder: (dialogContext) => Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 20, bottom: 20),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                constraints: constraints,
+                decoration: BoxDecoration(
+                  color: effectiveTheme.colors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: wrapWithTextScaler(
+                    Navigator(
+                      key: nestedNavigatorKey,
+                      onGenerateRoute: (settings) {
+                        return MaterialPageRoute(
+                          builder: (innerContext) => FeeddoHomeScreen(
+                            theme: effectiveTheme,
+                            onClose: () {
+                              Navigator.of(dialogContext).pop();
+                            },
+                            onMessagesTap: () {
+                              nestedNavigatorKey.currentState?.push(
+                                MaterialPageRoute(
+                                  builder: (context) => FeeddoMessagesScreen(
+                                      theme: effectiveTheme),
+                                ),
+                              );
+                            },
+                            onTicketsTap: () {
+                              nestedNavigatorKey.currentState?.push(
+                                MaterialPageRoute(
+                                  builder: (context) => FeeddoTicketsScreen(
+                                      theme: effectiveTheme),
+                                ),
+                              );
+                            },
+                            onFeatureRequestTap: () {
+                              nestedNavigatorKey.currentState?.push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      FeeddoTasksScreen(theme: effectiveTheme),
+                                ),
+                              );
+                            },
+                            onSendMessageTap: () {
+                              // TODO: Navigate to new message
+                              debugPrint('Send message tapped');
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    context,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ).then((_) {
+        // Reconnect with no conversation ID to ensure we receive all notifications
+        _instance?.connectWebSocket(conversationId: null);
+      });
+    } else {
+      Navigator.of(context)
+          .push(
+        MaterialPageRoute(
+          builder: (context) => wrapWithTextScaler(
+            FeeddoHomeScreen(
+              theme: effectiveTheme,
+              onClose: () {
+                Navigator.of(context).pop();
+              },
+              onMessagesTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        FeeddoMessagesScreen(theme: effectiveTheme),
+                  ),
+                );
+              },
+              onTicketsTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        FeeddoTicketsScreen(theme: effectiveTheme),
+                  ),
+                );
+              },
+              onFeatureRequestTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        FeeddoTasksScreen(theme: effectiveTheme),
+                  ),
+                );
+              },
+              onSendMessageTap: () {
+                // TODO: Navigate to new message
+                debugPrint('Send message tapped');
+              },
+            ),
+            context,
+          ),
+          fullscreenDialog: true,
+        ),
+      )
+          .then((_) {
+        // Do not disconnect when the screen is popped to keep receiving notifications
+        // _instance?.disconnectWebSocket();
+
+        // Reconnect with no conversation ID to ensure we receive all notifications
+        _instance?.connectWebSocket(conversationId: null);
+      });
+    }
   }
 }

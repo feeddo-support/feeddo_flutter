@@ -157,7 +157,7 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.insert_drive_file, color: Colors.grey),
+          const Icon(Icons.insert_drive_file, color: Colors.grey, size: 20),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -183,7 +183,7 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.red),
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
           const SizedBox(height: 8),
           Text(
             widget.fileName ?? 'Error loading file',

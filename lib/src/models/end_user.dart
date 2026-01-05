@@ -1,3 +1,5 @@
+import 'push_provider.dart';
+
 /// Model representing an end user in the Feeddo system
 class EndUser {
   /// Unique identifier for the user (auto-generated if not provided)
@@ -39,6 +41,12 @@ class EndUser {
   /// Custom key-value pairs for additional data
   final Map<String, dynamic>? customAttributes;
 
+  /// Push notification token
+  final String? pushToken;
+
+  /// Push notification provider (fcm, apns, onesignal)
+  final FeeddoPushProvider? pushProvider;
+
   const EndUser({
     this.userId,
     this.externalUserId,
@@ -53,6 +61,8 @@ class EndUser {
     this.userSegment,
     this.subscriptionStatus,
     this.customAttributes,
+    this.pushToken,
+    this.pushProvider,
   });
 
   /// Convert EndUser to JSON for API requests
@@ -73,6 +83,8 @@ class EndUser {
     if (subscriptionStatus != null)
       json['subscriptionStatus'] = subscriptionStatus;
     if (customAttributes != null) json['customAttributes'] = customAttributes;
+    if (pushToken != null) json['pushToken'] = pushToken;
+    if (pushProvider != null) json['pushProvider'] = pushProvider!.value;
 
     return json;
   }
@@ -93,10 +105,13 @@ class EndUser {
       userSegment: json['userSegment'] as String?,
       subscriptionStatus: json['subscriptionStatus'] as String?,
       customAttributes: json['customAttributes'] as Map<String, dynamic>?,
+      pushToken: json['pushToken'] as String?,
+      pushProvider:
+          FeeddoPushProvider.fromString(json['pushProvider'] as String?),
     );
   }
 
-  /// Create a copy with updated fields
+  /// Create a copy of EndUser with updated fields
   EndUser copyWith({
     String? userId,
     String? externalUserId,
@@ -111,6 +126,8 @@ class EndUser {
     String? userSegment,
     String? subscriptionStatus,
     Map<String, dynamic>? customAttributes,
+    String? pushToken,
+    FeeddoPushProvider? pushProvider,
   }) {
     return EndUser(
       userId: userId ?? this.userId,
@@ -126,6 +143,8 @@ class EndUser {
       userSegment: userSegment ?? this.userSegment,
       subscriptionStatus: subscriptionStatus ?? this.subscriptionStatus,
       customAttributes: customAttributes ?? this.customAttributes,
+      pushToken: pushToken ?? this.pushToken,
+      pushProvider: pushProvider ?? this.pushProvider,
     );
   }
 

@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketService {
-  WebSocket? _webSocket;
+  WebSocketChannel? _channel;
   final String baseUrl;
   final String apiKey;
   String? _userId;
   bool _isDisposed = false;
+  bool _isConnected = false;
 
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageController.stream;
@@ -25,15 +26,16 @@ class WebSocketService {
     _userId = userId;
 
     // If connected and conversationId matches (or both null), do nothing
-    if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
+    if (_isConnected) {
       if (_currentConversationId == conversationId) {
         return;
       }
       // If conversationId changed, close and reconnect
       debugPrint(
           'WebSocket: Switching conversation from $_currentConversationId to $conversationId');
-      await _webSocket!.close();
-      _webSocket = null;
+      await _channel?.sink.close();
+      _channel = null;
+      _isConnected = false;
     }
 
     _currentConversationId = conversationId;
@@ -56,9 +58,12 @@ class WebSocketService {
           Uri.parse('$wsUrl/chat/ws').replace(queryParameters: queryParams);
 
       debugPrint('WebSocket: Connecting to $uri');
-      _webSocket = await WebSocket.connect(uri.toString());
+      _channel = WebSocketChannel.connect(uri);
 
-      _webSocket!.listen(
+      // Assume connected until error or done
+      _isConnected = true;
+
+      _channel!.stream.listen(
         (data) {
           try {
             debugPrint('WebSocket: Received: $data');
@@ -70,10 +75,12 @@ class WebSocketService {
         },
         onError: (e) {
           debugPrint('WebSocket: Error: $e');
+          _isConnected = false;
           _reconnect();
         },
         onDone: () {
           debugPrint('WebSocket: Connection closed');
+          _isConnected = false;
           _reconnect();
         },
       );
@@ -81,6 +88,7 @@ class WebSocketService {
       debugPrint('WebSocket: Connected');
     } catch (e) {
       debugPrint('WebSocket: Connection failed: $e');
+      _isConnected = false;
       _reconnect();
     }
   }
@@ -90,8 +98,7 @@ class WebSocketService {
 
     // Simple reconnection logic
     Future.delayed(const Duration(seconds: 5), () {
-      if (!_isDisposed &&
-          (_webSocket == null || _webSocket!.readyState != WebSocket.open)) {
+      if (!_isDisposed && !_isConnected) {
         connect(userId: _userId!, conversationId: _currentConversationId);
       }
     });
@@ -99,7 +106,7 @@ class WebSocketService {
 
   Future<void> send(Map<String, dynamic> message) async {
     // If not connected, try to connect first
-    if (_webSocket == null || _webSocket!.readyState != WebSocket.open) {
+    if (!_isConnected) {
       if (_userId == null) {
         debugPrint('WebSocket: Cannot send message - userId not set');
         return;
@@ -114,10 +121,10 @@ class WebSocketService {
     }
 
     // Now try to send
-    if (_webSocket != null && _webSocket!.readyState == WebSocket.open) {
+    if (_isConnected && _channel != null) {
       final encoded = jsonEncode(message);
       debugPrint('WebSocket: Sending: $encoded');
-      _webSocket!.add(encoded);
+      _channel!.sink.add(encoded);
     } else {
       debugPrint('WebSocket: Failed to connect, cannot send message');
     }
@@ -125,8 +132,9 @@ class WebSocketService {
 
   void disconnect() {
     _isDisposed = true;
-    _webSocket?.close();
-    _webSocket = null;
+    _isConnected = false;
+    _channel?.sink.close();
+    _channel = null;
   }
 
   void dispose() {

@@ -82,6 +82,30 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
     );
   }
 
+  Widget _buildRichText(String text, TextStyle baseStyle) {
+    final List<TextSpan> spans = [];
+    final parts = text.split('**');
+
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 0) {
+        // Normal text
+        spans.add(TextSpan(text: parts[i], style: baseStyle));
+      } else {
+        // Bold text
+        spans.add(TextSpan(
+          text: parts[i],
+          style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+        ));
+      }
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final service = FeeddoInternal.instance.conversationService;
@@ -93,12 +117,17 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
       backgroundColor: _theme.colors.background,
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FloatingActionButton(
-          onPressed: _createNewConversation,
-          backgroundColor: _theme.colors.primary,
-          shape: const CircleBorder(),
-          child: Icon(Icons.edit,
-              color: _theme.isDark ? Colors.black : Colors.white),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: FloatingActionButton(
+            onPressed: _createNewConversation,
+            backgroundColor: _theme.colors.primary,
+            shape: const CircleBorder(),
+            elevation: 4,
+            child: Icon(Icons.edit,
+                size: 20, color: _theme.isDark ? Colors.black : Colors.white),
+          ),
         ),
       ),
       appBar: AppBar(
@@ -106,7 +135,8 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
+          icon:
+              Icon(Icons.arrow_back, color: _theme.colors.iconColor, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -220,14 +250,12 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
+                        child: _buildRichText(
                           conversation.lastMessagePreview ?? 'No messages',
-                          style: TextStyle(
+                          TextStyle(
                             color: _theme.colors.textSecondary,
                             fontSize: 14,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (conversation.unreadMessages > 0) ...[

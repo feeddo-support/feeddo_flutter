@@ -9,16 +9,23 @@ import '../screens/feeddo_chat_screen.dart';
 /// Displays a dismissible notification banner when there are unread messages
 /// in a conversation. Appears at the top of the screen with slide-in animation.
 class FeeddoNotificationBadge extends StatefulWidget {
-  final Conversation conversation;
+  final Conversation? conversation;
+  final String? title;
+  final String? body;
+  final VoidCallback? onTap;
   final VoidCallback? onDismiss;
   final FeeddoTheme? theme;
 
   const FeeddoNotificationBadge({
     Key? key,
-    required this.conversation,
+    this.conversation,
+    this.title,
+    this.body,
+    this.onTap,
     this.onDismiss,
     this.theme,
-  }) : super(key: key);
+  })  : assert(conversation != null || (title != null && body != null)),
+        super(key: key);
 
   @override
   State<FeeddoNotificationBadge> createState() =>
@@ -72,14 +79,18 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
   }
 
   void _onTap() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => FeeddoChatScreen(
-          conversation: widget.conversation,
-          theme: widget.theme ?? FeeddoTheme.dark(),
+    if (widget.onTap != null) {
+      widget.onTap!();
+    } else if (widget.conversation != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => FeeddoChatScreen(
+            conversation: widget.conversation!,
+            theme: widget.theme ?? FeeddoTheme.dark(),
+          ),
         ),
-      ),
-    );
+      );
+    }
     _dismiss();
   }
 
@@ -102,6 +113,13 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
   @override
   Widget build(BuildContext context) {
     final theme = widget.theme ?? FeeddoTheme.dark();
+    final title = widget.title ??
+        widget.conversation?.displayName ??
+        FeeddoInternal.instance.chatBotName;
+    final body = widget.body ?? widget.conversation?.lastMessagePreview;
+    final time = widget.conversation != null
+        ? _formatTime(widget.conversation!.lastMessageAt)
+        : 'Now';
 
     return SlideTransition(
       position: _slideAnimation,
@@ -148,7 +166,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                           child: Icon(
                             Icons.chat_bubble_outline_rounded,
                             color: theme.colors.primary,
-                            size: 20,
+                            size: 18,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -162,8 +180,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      widget.conversation.displayName ??
-                                          FeeddoInternal.instance.chatBotName,
+                                      title,
                                       style: TextStyle(
                                         color: theme.colors.textPrimary,
                                         fontSize: 14,
@@ -176,8 +193,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _formatTime(
-                                        widget.conversation.lastMessageAt),
+                                    time,
                                     style: TextStyle(
                                       color: theme.colors.textSecondary,
                                       fontSize: 12,
@@ -186,16 +202,15 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              if (widget.conversation.lastMessagePreview !=
-                                  null)
+                              if (body != null)
                                 Text(
-                                  widget.conversation.lastMessagePreview!,
+                                  body,
                                   style: TextStyle(
                                     color: theme.colors.textSecondary,
                                     fontSize: 13,
                                     height: 1.4,
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 10,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                             ],
@@ -214,7 +229,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                               Icons.close_rounded,
                               color:
                                   theme.colors.textSecondary.withOpacity(0.7),
-                              size: 18,
+                              size: 16,
                             ),
                           ),
                         ),
@@ -231,10 +246,26 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
   }
 }
 
+class _NotificationItem {
+  final Conversation? conversation;
+  final String? title;
+  final String? body;
+  final VoidCallback? onTap;
+
+  _NotificationItem({
+    this.conversation,
+    this.title,
+    this.body,
+    this.onTap,
+  });
+
+  String get id => conversation?.id ?? title ?? '';
+}
+
 /// Overlay entry manager for showing notifications
 class FeeddoNotificationManager {
   static OverlayEntry? _currentOverlay;
-  static final List<Conversation> _notificationQueue = [];
+  static final List<_NotificationItem> _notificationQueue = [];
   static bool _isShowing = false;
 
   /// Show a notification for a conversation
@@ -247,10 +278,40 @@ class FeeddoNotificationManager {
     // Skip if no unread messages
     if (conversation.unreadMessages == 0) return;
 
+    // Skip if this conversation is currently active
+    try {
+      if (FeeddoInternal.instance.conversationService.activeConversationId ==
+          conversation.id) {
+        return;
+      }
+    } catch (_) {}
+
     // Add to queue
-    if (!_notificationQueue.any((c) => c.id == conversation.id)) {
-      _notificationQueue.add(conversation);
+    if (!_notificationQueue.any((c) => c.conversation?.id == conversation.id)) {
+      _notificationQueue.add(_NotificationItem(conversation: conversation));
     }
+
+    // Show next notification if not already showing
+    if (!_isShowing) {
+      _showNext(context, theme: theme, duration: duration);
+    }
+  }
+
+  /// Show a simple notification with title and body
+  static void showSimpleNotification(
+    BuildContext context, {
+    required String title,
+    required String body,
+    VoidCallback? onTap,
+    FeeddoTheme? theme,
+    Duration duration = const Duration(seconds: 10),
+  }) {
+    // Add to queue
+    _notificationQueue.add(_NotificationItem(
+      title: title,
+      body: body,
+      onTap: onTap,
+    ));
 
     // Show next notification if not already showing
     if (!_isShowing) {
@@ -261,15 +322,20 @@ class FeeddoNotificationManager {
   static void _showNext(
     BuildContext context, {
     FeeddoTheme? theme,
-    Duration duration = const Duration(seconds: 5),
+    Duration duration = const Duration(seconds: 10),
   }) {
+    if (!context.mounted) {
+      _isShowing = false;
+      return;
+    }
+
     if (_notificationQueue.isEmpty) {
       _isShowing = false;
       return;
     }
 
     _isShowing = true;
-    final conversation = _notificationQueue.removeAt(0);
+    final item = _notificationQueue.removeAt(0);
 
     _currentOverlay = OverlayEntry(
       builder: (context) => Positioned(
@@ -277,20 +343,34 @@ class FeeddoNotificationManager {
         left: 0,
         right: 0,
         child: FeeddoNotificationBadge(
-          conversation: conversation,
+          conversation: item.conversation,
+          title: item.title,
+          body: item.body,
+          onTap: item.onTap,
           theme: theme,
           onDismiss: () {
             _dismiss();
             // Show next notification after a brief delay
             Future.delayed(const Duration(milliseconds: 300), () {
-              _showNext(context, theme: theme, duration: duration);
+              if (context.mounted) {
+                _showNext(context, theme: theme, duration: duration);
+              } else {
+                _isShowing = false;
+              }
             });
           },
         ),
       ),
     );
 
-    Overlay.of(context).insert(_currentOverlay!);
+    try {
+      Overlay.of(context).insert(_currentOverlay!);
+    } catch (e) {
+      // Handle case where overlay cannot be inserted
+      _isShowing = false;
+      _currentOverlay = null;
+      return;
+    }
 
     // Auto-dismiss after duration
     Future.delayed(duration, () {
@@ -298,7 +378,11 @@ class FeeddoNotificationManager {
         _dismiss();
         // Show next notification
         Future.delayed(const Duration(milliseconds: 300), () {
-          _showNext(context, theme: theme, duration: duration);
+          if (context.mounted) {
+            _showNext(context, theme: theme, duration: duration);
+          } else {
+            _isShowing = false;
+          }
         });
       }
     });

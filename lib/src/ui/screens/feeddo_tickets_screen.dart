@@ -62,7 +62,8 @@ class _FeeddoTicketsScreenState extends State<FeeddoTicketsScreen> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
+          icon:
+              Icon(Icons.arrow_back, color: _theme.colors.iconColor, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(

@@ -140,131 +140,135 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: _theme.colors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Filter & Sort',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: _theme.colors.textPrimary,
+        builder: (context, setSheetState) => SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Filter & Sort',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: _theme.colors.textPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Sort By
-              Text('Sort By',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: _theme.colors.textPrimary)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildFilterChip(
-                    label: 'Newest',
-                    selected: _sortBy == 'time',
-                    onSelected: (selected) {
-                      if (selected) setSheetState(() => _sortBy = 'time');
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _buildFilterChip(
-                    label: 'Most Upvoted',
-                    selected: _sortBy == 'upvotes',
-                    onSelected: (selected) {
-                      if (selected) setSheetState(() => _sortBy = 'upvotes');
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Type
-              Text('Type',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: _theme.colors.textPrimary)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildFilterChip(
-                    label: 'All',
-                    selected: _filterType == null,
-                    onSelected: (selected) {
-                      if (selected) setSheetState(() => _filterType = null);
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _buildFilterChip(
-                    label: 'Features',
-                    selected: _filterType == 'feature',
-                    onSelected: (selected) {
-                      if (selected)
-                        setSheetState(() => _filterType = 'feature');
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _buildFilterChip(
-                    label: 'Bugs',
-                    selected: _filterType == 'bug',
-                    onSelected: (selected) {
-                      if (selected) setSheetState(() => _filterType = 'bug');
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // My Tasks
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Show created by me only',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: _theme.colors.textPrimary)),
-                  Switch(
-                    value: _showMyTasksOnly,
-                    onChanged: (value) {
-                      setSheetState(() => _showMyTasksOnly = value);
-                    },
-                    activeThumbColor: _theme.colors.primary,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _loadTasks(refresh: true);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _theme.colors.primary,
-                    foregroundColor:
-                        _theme.isDark ? Colors.black : Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // Sort By
+                Text('Sort By',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _theme.colors.textPrimary)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildFilterChip(
+                      label: 'Newest',
+                      selected: _sortBy == 'time',
+                      onSelected: (selected) {
+                        if (selected) setSheetState(() => _sortBy = 'time');
+                      },
                     ),
-                  ),
-                  child: const Text('Apply Filters'),
+                    _buildFilterChip(
+                      label: 'Most Upvoted',
+                      selected: _sortBy == 'upvotes',
+                      onSelected: (selected) {
+                        if (selected) setSheetState(() => _sortBy = 'upvotes');
+                      },
+                    ),
+                  ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 24),
+
+                // Type
+                Text('Type',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _theme.colors.textPrimary)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildFilterChip(
+                      label: 'All',
+                      selected: _filterType == null,
+                      onSelected: (selected) {
+                        if (selected) setSheetState(() => _filterType = null);
+                      },
+                    ),
+                    _buildFilterChip(
+                      label: 'Features',
+                      selected: _filterType == 'feature',
+                      onSelected: (selected) {
+                        if (selected)
+                          setSheetState(() => _filterType = 'feature');
+                      },
+                    ),
+                    _buildFilterChip(
+                      label: 'Bugs',
+                      selected: _filterType == 'bug',
+                      onSelected: (selected) {
+                        if (selected) setSheetState(() => _filterType = 'bug');
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // My Tasks
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Show created by me only',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _theme.colors.textPrimary)),
+                    Switch(
+                      value: _showMyTasksOnly,
+                      onChanged: (value) {
+                        setSheetState(() => _showMyTasksOnly = value);
+                      },
+                      activeThumbColor: _theme.colors.primary,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _loadTasks(refresh: true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _theme.colors.primary,
+                      foregroundColor:
+                          _theme.isDark ? Colors.black : Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Apply Filters'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -304,12 +308,17 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
       backgroundColor: _theme.colors.background,
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FloatingActionButton(
-          onPressed: _createNewTask,
-          backgroundColor: _theme.colors.primary,
-          shape: const CircleBorder(),
-          child: Icon(Icons.add,
-              color: _theme.isDark ? Colors.black : Colors.white),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: FloatingActionButton(
+            onPressed: _createNewTask,
+            backgroundColor: _theme.colors.primary,
+            shape: const CircleBorder(),
+            elevation: 4,
+            child: Icon(Icons.add,
+                size: 20, color: _theme.isDark ? Colors.black : Colors.white),
+          ),
         ),
       ),
       appBar: AppBar(
@@ -317,7 +326,8 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
+          icon:
+              Icon(Icons.arrow_back, color: _theme.colors.iconColor, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -332,7 +342,8 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
           IconButton(
             icon: Stack(
               children: [
-                Icon(Icons.filter_list, color: _theme.colors.iconColor),
+                Icon(Icons.filter_list,
+                    color: _theme.colors.iconColor, size: 20),
                 if (_filterType != null ||
                     _showMyTasksOnly ||
                     _sortBy != 'time')

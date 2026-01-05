@@ -44,7 +44,7 @@ class _RatingWidgetState extends State<RatingWidget> {
       children: List.generate(5, (index) {
         final starIndex = index + 1;
         return IconButton(
-          iconSize: 32,
+          iconSize: 24,
           padding: EdgeInsets.zero,
           icon: Icon(
             starIndex <= _currentRating ? Icons.star : Icons.star_border,

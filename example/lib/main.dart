@@ -1,7 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:feeddo_flutter/feeddo_flutter.dart';
 
-void main() {
+import 'package:flutter/foundation.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+
+  if (kDebugMode) {
+    print("Handling a background message: ${message.messageId}");
+    print('Message data: ${message.data}');
+    print('Message notification: ${message.notification?.title}');
+    print('Message notification: ${message.notification?.body}');
+  }
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   runApp(const MyApp());
 }
 
@@ -41,6 +61,22 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
   /// Initialize Feeddo SDK
   Future<void> _initFeeddo() async {
+    final messaging = FirebaseMessaging.instance;
+    final settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    String? token = await messaging.getToken();
+
+    if (kDebugMode) {
+      print('Registration Token=$token');
+    }
+
     setState(() {
       _isLoading = true;
       _status = 'Initializing Feeddo...';
@@ -48,9 +84,14 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'fdo_6d4665ccb4194536b6ce6630f22060c7',
+        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
         context: context,
         notificationDuration: Duration(seconds: 10),
+      );
+
+      Feeddo.registerPushToken(
+        pushToken: token!,
+        pushProvider: FeeddoPushProvider.fcm,
       );
 
       int count = Feeddo.unreadMessageCount;
@@ -59,6 +100,27 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       setState(() {
         _status = 'Feeddo initialized!\nUser ID: $userId';
         _isLoading = false;
+      });
+
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        print('A new onMessageOpenedApp event was published!');
+        print('Message data: ${message.data}');
+        print('Message notification: ${message.notification?.title}');
+        print('Message notification: ${message.notification?.body}');
+        Feeddo.handleNotificationTap(context, message.data);
+      });
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Received a message while in the foreground!');
+        print('Message data: ${message.data}');
+        print('Message notification: ${message.notification?.title}');
+        print('Message notification: ${message.notification?.body}');
+        Feeddo.showInappNotification(
+          context: context,
+          title: message.notification?.title ?? 'New Message',
+          message: message.notification?.body ?? '',
+          data: message.data,
+        );
       });
     } catch (e) {
       setState(() {
@@ -77,7 +139,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'demo-api-key',
+        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
         context: context,
         externalUserId: 'user-12345',
         userName: 'John Doe',
@@ -116,7 +178,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       await Feeddo.init(
         context: context,
-        apiKey: 'demo-api-key',
+        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
         userName: 'John Doe Updated',
         subscriptionStatus: 'premium',
         customAttributes: {
@@ -152,7 +214,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(
         context: context,
-        apiKey: 'demo-api-key',
+        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
         externalUserId: 'custom-user-456',
         userName: 'Jane Smith',
         email: 'jane@example.com',
@@ -160,10 +222,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
         subscriptionStatus: 'premium',
         customAttributes: {
           'role': 'admin',
-          'preferences': {
-            'theme': 'dark',
-            'notifications': true,
-          },
+          'preferences': {'theme': 'dark', 'notifications': true},
         },
       );
 
@@ -218,19 +277,13 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
               const Text(
                 'Feeddo Flutter SDK Demo',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               const Text(
                 'End User Upsert Example',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 32),
 
@@ -295,15 +348,18 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
               const Text(
                 'Support UI',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: () =>
-                    Feeddo.show(context, theme: FeeddoTheme.dark()),
+                onPressed: () => Feeddo.show(
+                  context,
+                  theme: FeeddoTheme.dark(),
+                  desktopConstraints: BoxConstraints(
+                    maxWidth: 370,
+                    maxHeight: 700,
+                  ),
+                ),
                 icon: const Icon(Icons.chat),
                 label: const Text('Open Support (Default Dark)'),
                 style: ElevatedButton.styleFrom(

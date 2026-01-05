@@ -64,6 +64,28 @@ class MessageBubble extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}, $timeStr';
   }
 
+  Widget _buildRichText(String text, TextStyle baseStyle) {
+    final List<TextSpan> spans = [];
+    final parts = text.split('**');
+
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 0) {
+        // Normal text
+        spans.add(TextSpan(text: parts[i], style: baseStyle));
+      } else {
+        // Bold text
+        spans.add(TextSpan(
+          text: parts[i],
+          style: baseStyle.copyWith(fontWeight: FontWeight.bold),
+        ));
+      }
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isUser = message.isUser;
@@ -122,13 +144,13 @@ class MessageBubble extends StatelessWidget {
                           height: 32,
                           decoration: BoxDecoration(
                             color: message.role == 'human'
-                                ? Colors.purple.shade600
+                                ? const Color.fromARGB(255, 100, 81, 244)
                                 : theme.colors.primary.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(32),
                           ),
                           child: Icon(
                             message.role == 'human'
-                                ? Icons.support_agent
+                                ? Icons.code
                                 : Icons.catching_pokemon,
                             color: message.role == 'human'
                                 ? Colors.white
@@ -150,9 +172,9 @@ class MessageBubble extends StatelessWidget {
                     const SizedBox(height: 12),
                   ],
                   if (parsedContent.content.isNotEmpty)
-                    Text(
+                    _buildRichText(
                       parsedContent.content,
-                      style: TextStyle(
+                      TextStyle(
                         color: isUser
                             ? (theme.isDark ? Colors.black : Colors.white)
                             : theme.colors.textPrimary,

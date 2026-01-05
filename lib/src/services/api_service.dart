@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/end_user.dart';
 import '../models/conversation.dart';
 import '../models/message.dart';
@@ -10,6 +11,7 @@ import '../models/task.dart';
 import '../models/ticket.dart';
 import '../models/task_comment.dart';
 import '../models/home_data.dart';
+import '../models/feeddo_notification.dart';
 
 /// Exception thrown when API requests fail
 class FeeddoApiException implements Exception {
@@ -98,6 +100,44 @@ class ApiService {
         final errorBody = _parseErrorBody(response.body);
         throw FeeddoApiException(
           errorBody['error'] ?? 'Failed to get home data',
+          statusCode: response.statusCode,
+          details: errorBody['details'],
+        );
+      }
+    } catch (e) {
+      if (e is FeeddoApiException) rethrow;
+      throw FeeddoApiException(
+        'Network error: ${e.toString()}',
+        details: e,
+      );
+    }
+  }
+
+  /// Get notifications for a user
+  Future<List<FeeddoNotification>> getNotifications(String userId,
+      {int limit = 50, int offset = 0}) async {
+    final url = Uri.parse(
+        '$apiUrl/end-users/notifications?userId=$userId&limit=$limit&offset=$offset');
+
+    try {
+      final response = await _client.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final responseObj = GetNotificationsResponse.fromJson(json);
+        return responseObj.notifications;
+      } else {
+        debugPrint(
+            'Feeddo: Failed to get notifications. Status: ${response.statusCode}, Body: ${response.body}');
+        final errorBody = _parseErrorBody(response.body);
+        throw FeeddoApiException(
+          errorBody['error'] ?? 'Failed to get notifications',
           statusCode: response.statusCode,
           details: errorBody['details'],
         );
@@ -570,22 +610,24 @@ class ApiService {
 
   /// Parse error response body
   /// Upload media file
-  Future<Map<String, dynamic>> uploadMedia(File file, String userId) async {
+  Future<Map<String, dynamic>> uploadMedia(XFile file, String userId) async {
     final url = Uri.parse('$apiUrl/media/upload?userId=$userId');
 
     final request = http.MultipartRequest('POST', url);
     request.headers['x-api-key'] = apiKey;
 
-    final mimeType = lookupMimeType(file.path);
+    final mimeType = file.mimeType ?? lookupMimeType(file.name);
     MediaType? contentType;
     if (mimeType != null) {
       final split = mimeType.split('/');
       contentType = MediaType(split[0], split[1]);
     }
 
-    final multipartFile = await http.MultipartFile.fromPath(
+    final bytes = await file.readAsBytes();
+    final multipartFile = http.MultipartFile.fromBytes(
       'file',
-      file.path,
+      bytes,
+      filename: file.name,
       contentType: contentType,
     );
     request.files.add(multipartFile);

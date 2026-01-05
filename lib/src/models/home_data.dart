@@ -7,6 +7,7 @@ class HomeData {
   final bool hasTicket;
   final bool hasTasks;
   final int unreadMessageCount;
+  final int unreadNotificationCount;
   final String? chatbotName;
   final Ticket? recentTicket;
   final Task? recentTask;
@@ -17,6 +18,7 @@ class HomeData {
     required this.hasTicket,
     required this.hasTasks,
     required this.unreadMessageCount,
+    this.unreadNotificationCount = 0,
     this.chatbotName,
     this.recentTicket,
     this.recentTask,
@@ -29,6 +31,7 @@ class HomeData {
       hasTicket: json['hasTicket'] ?? false,
       hasTasks: json['hasTasks'] ?? false,
       unreadMessageCount: json['unreadMessageCount'] ?? 0,
+      unreadNotificationCount: json['unreadNotificationCount'] ?? 0,
       chatbotName: json['chatbotName'],
       recentTicket: json['recentTicket'] != null
           ? Ticket.fromJson(json['recentTicket'])

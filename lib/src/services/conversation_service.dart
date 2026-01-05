@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../models/conversation.dart';
 import 'api_service.dart';
 import 'websocket_service.dart';
@@ -19,6 +19,7 @@ class ConversationService extends ChangeNotifier {
   String? get error => _error;
 
   String? _activeConversationId;
+  String? get activeConversationId => _activeConversationId;
 
   int _unreadMessageCount = 0;
   int get unreadMessageCount => _unreadMessageCount;
@@ -81,7 +82,7 @@ class ConversationService extends ChangeNotifier {
     return conversation;
   }
 
-  Future<Map<String, dynamic>> uploadMedia(File file, String userId) async {
+  Future<Map<String, dynamic>> uploadMedia(XFile file, String userId) async {
     return await _apiService.uploadMedia(file, userId);
   }
 

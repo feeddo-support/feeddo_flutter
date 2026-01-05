@@ -171,6 +171,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
             Icon(
               task.type == 'bug' ? Icons.bug_report : Icons.lightbulb,
               color: task.type == 'bug' ? Colors.red : Colors.amber,
+              size: 20,
             ),
             const SizedBox(width: 8),
             Text(

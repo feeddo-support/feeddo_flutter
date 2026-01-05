@@ -151,7 +151,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
             Icon(
               Icons.confirmation_number,
               color: Colors.blue,
-              size: 24,
+              size: 20,
             ),
             const SizedBox(width: 8),
             Text(
