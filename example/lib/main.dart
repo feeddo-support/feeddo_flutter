@@ -84,7 +84,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
+        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
         context: context,
         notificationDuration: Duration(seconds: 10),
       );
@@ -139,11 +139,8 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
+        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
         context: context,
-        externalUserId: 'user-12345',
-        userName: 'John Doe',
-        email: 'john.doe@example.com',
         subscriptionStatus: 'free',
         customAttributes: {
           'signupDate': DateTime.now().toIso8601String(),
@@ -178,7 +175,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       await Feeddo.init(
         context: context,
-        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
+        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
         userName: 'John Doe Updated',
         subscriptionStatus: 'premium',
         customAttributes: {
@@ -214,7 +211,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(
         context: context,
-        apiKey: 'fdo_7f42b52f17fa47d98c619230b41cdb5a',
+        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
         externalUserId: 'custom-user-456',
         userName: 'Jane Smith',
         email: 'jane@example.com',

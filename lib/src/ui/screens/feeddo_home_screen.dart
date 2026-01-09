@@ -324,7 +324,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                             const SizedBox(height: 12),
                             _buildMenuCard(
                               title: 'Feature Requests',
-                              subtitle: 'Suggest features or report bugs',
+                              subtitle: 'Suggest a feature or Report a bug',
                               icon: Icons.lightbulb_outline,
                               color: Colors.amber,
                               onTap: widget.onFeatureRequestTap,
