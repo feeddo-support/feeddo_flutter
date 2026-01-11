@@ -564,14 +564,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
       decoration: BoxDecoration(
         color: widget.theme.colors.primary,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: widget.theme.colors.primary.withOpacity(0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-            spreadRadius: 0,
-          ),
-        ],
+        
       ),
       child: Material(
         color: Colors.transparent,
