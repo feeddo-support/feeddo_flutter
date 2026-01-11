@@ -51,7 +51,7 @@ class FeeddoInternal {
   // Private constructor
   FeeddoInternal._(String apiKey)
       : _apiService = ApiService(
-          apiUrl: 'https://feeddo-backend.tithipal699.workers.dev/api',
+          apiUrl: 'https://feeddo-backend-prod.tithipal699.workers.dev/api',
           apiKey: apiKey,
         ) {
     _webSocketService = WebSocketService(
