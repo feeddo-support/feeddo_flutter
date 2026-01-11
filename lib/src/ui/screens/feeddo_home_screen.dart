@@ -248,16 +248,33 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
       child: Scaffold(
         backgroundColor: widget.theme.colors.background,
         floatingActionButton: hasRecentActivity
-            ? SizedBox(
-                width: 48,
-                height: 48,
-                child: FloatingActionButton(
-                  onPressed: _createNewConversation,
-                  backgroundColor: widget.theme.colors.primary,
-                  elevation: 4,
-                  child: Icon(Icons.edit,
-                      size: 20,
-                      color: widget.theme.isDark ? Colors.black : Colors.white),
+            ? Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.theme.colors.primary.withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: FloatingActionButton(
+                    onPressed: _createNewConversation,
+                    backgroundColor: widget.theme.colors.primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(Icons.edit_rounded,
+                        size: 24,
+                        color:
+                            widget.theme.isDark ? Colors.black : Colors.white),
+                  ),
                 ),
               )
             : null,
@@ -268,49 +285,58 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
               children: [
                 Column(
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Greeting
-                            const SizedBox(height: 20),
+                            // Greeting Section
+                            const SizedBox(height: 32),
                             Text(
                               'Hi there 👋',
                               style: TextStyle(
                                 color: widget.theme.colors.textPrimary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -1.0,
+                                height: 1.2,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             Text(
                               'How can we help you today?',
                               style: TextStyle(
-                                color: widget.theme.colors.textPrimary
-                                    .withOpacity(0.7),
-                                fontSize: 16,
+                                color: widget.theme.colors.textSecondary,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w400,
+                                letterSpacing: -0.2,
                               ),
                             ),
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 36),
 
-                            // Menu Grid
-                            Text(
-                              'MENU',
-                              style: TextStyle(
-                                color: widget.theme.colors.textSecondary
-                                    .withOpacity(0.8),
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.2,
-                              ),
+                            // Primary Action Card
+                            if (!hasRecentActivity) ...[
+                              _buildPrimaryActionCard(),
+                              const SizedBox(height: 32),
+                            ],
+
+                            // Quick Actions Section
+                            Row(
+                              children: [
+                                Text(
+                                  'Quick Actions',
+                                  style: TextStyle(
+                                    color: widget.theme.colors.textPrimary,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 20),
 
                             _buildMenuCard(
                               title: 'Messages',
@@ -321,15 +347,15 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                               badgeCount: FeeddoInternal.instance
                                   .conversationService.unreadMessageCount,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             _buildMenuCard(
-                              title: 'Feature Requests',
-                              subtitle: 'Suggest a feature or Report a bug',
+                              title: 'Request a feature',
+                              subtitle: 'Suggest features or report bugs',
                               icon: Icons.lightbulb_outline,
                               color: Colors.amber,
                               onTap: widget.onFeatureRequestTap,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             _buildMenuCard(
                               title: 'Tickets',
                               subtitle: 'Track your support tickets',
@@ -338,34 +364,32 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                               onTap: widget.onTicketsTap,
                             ),
 
-                            if (!hasRecentActivity) const SizedBox(height: 24),
-
-                            // Primary Action: Send Message
-                            if (!hasRecentActivity) _buildPrimaryActionCard(),
-
                             // Recent Activity Section
                             if (hasRecentActivity) ...[
-                              const SizedBox(height: 32),
-                              Text(
-                                'RECENT ACTIVITY',
-                                style: TextStyle(
-                                  color: widget.theme.colors.textSecondary
-                                      .withOpacity(0.8),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
+                              const SizedBox(height: 36),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Recent Activity',
+                                    style: TextStyle(
+                                      color: widget.theme.colors.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 20),
                               if (displayConversation != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 14),
                                   child: _buildConversationCard(
                                       displayConversation),
                                 ),
                               if (_homeData?.recentTicket != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 14),
                                   child: TicketCard(
                                     ticket: _homeData!.recentTicket!,
                                     theme: widget.theme,
@@ -380,7 +404,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                 ),
                               if (_homeData?.recentTask != null)
                                 Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 14),
                                   child: TaskCard(
                                     task: _homeData!.recentTask!,
                                     theme: widget.theme,
@@ -398,7 +422,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                 ),
                             ],
 
-                            const SizedBox(height: 40),
+                            const SizedBox(height: 48),
                             Center(
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -407,22 +431,25 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                     'Powered by ',
                                     style: TextStyle(
                                       color: widget.theme.colors.textSecondary
-                                          .withOpacity(0.5),
-                                      fontSize: 12,
+                                          .withOpacity(0.4),
+                                      fontSize: 13,
+                                      letterSpacing: -0.1,
                                     ),
                                   ),
                                   Text(
                                     FeeddoInternal.instance.chatBotName,
                                     style: TextStyle(
                                       color: widget.theme.colors.textSecondary
-                                          .withOpacity(0.7),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                          .withOpacity(0.6),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.1,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 24),
                           ],
                         ),
                       ),
@@ -431,48 +458,62 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 ),
                 Positioned(
                   right: 74,
-                  top: 16,
+                  top: 12,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color:
-                              widget.theme.colors.textPrimary.withOpacity(0.05),
-                          shape: BoxShape.circle,
+                          color: widget.theme.colors.cardBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: widget.theme.isDark
+                                  ? Colors.black.withOpacity(0.2)
+                                  : Colors.black.withOpacity(0.04),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: widget.theme.colors.divider.withOpacity(0.2),
+                            width: 1,
+                          ),
                         ),
                         child: IconButton(
                           icon: Icon(Icons.notifications_outlined,
-                              color: widget.theme.colors.textPrimary, size: 20),
+                              color: widget.theme.colors.textPrimary, size: 22),
                           onPressed: _showNotifications,
                         ),
                       ),
                       if (_homeData != null &&
                           _homeData!.unreadNotificationCount > 0)
                         Positioned(
-                          right: 0,
-                          top: 0,
+                          right: 4,
+                          top: 4,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(2),
                             decoration: const BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),
                             constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
+                              minWidth: 18,
+                              minHeight: 18,
                             ),
-                            child: Text(
-                              _homeData!.unreadNotificationCount > 99
-                                  ? '99+'
-                                  : _homeData!.unreadNotificationCount
-                                      .toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                            child: Center(
+                              child: Text(
+                                _homeData!.unreadNotificationCount > 99
+                                    ? '99+'
+                                    : _homeData!.unreadNotificationCount
+                                        .toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
                         ),
@@ -480,17 +521,29 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                   ),
                 ),
                 Positioned(
-                  right: 16,
-                  top: 16,
+                  right: 12,
+                  top: 12,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: widget.theme.colors.textPrimary.withOpacity(0.05),
-                      shape: BoxShape.circle,
+                      color: widget.theme.colors.cardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.theme.isDark
+                              ? Colors.black.withOpacity(0.2)
+                              : Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: widget.theme.colors.divider.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.close,
-                          color: widget.theme.colors.closeButtonColor,
-                          size: 20),
+                      icon: Icon(Icons.close_rounded,
+                          color: widget.theme.colors.closeButtonColor, size: 22),
                       onPressed:
                           widget.onClose ?? () => Navigator.of(context).pop(),
                     ),
@@ -506,54 +559,70 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
 
   Widget _buildPrimaryActionCard() {
     final onPrimaryColor = widget.theme.isDark ? Colors.black : Colors.white;
-    final iconBackgroundColor = widget.theme.isDark
-        ? Colors.black.withOpacity(0.1)
-        : Colors.white.withOpacity(0.2);
 
-    return InkWell(
-      onTap: _createNewConversation,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: widget.theme.colors.primary,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: widget.theme.colors.primary.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+    return Container(
+      decoration: BoxDecoration(
+        color: widget.theme.colors.primary,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: widget.theme.colors.primary.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _createNewConversation,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: onPrimaryColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.send_rounded,
+                      color: onPrimaryColor, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Send us a message',
+                        style: TextStyle(
+                          color: onPrimaryColor,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'We\'re here to help',
+                        style: TextStyle(
+                          color: onPrimaryColor.withOpacity(0.8),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_rounded,
+                    color: onPrimaryColor, size: 22),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconBackgroundColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.send_rounded, color: onPrimaryColor, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Send us a message',
-                    style: TextStyle(
-                      color: onPrimaryColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  )
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward, color: onPrimaryColor, size: 20),
-          ],
+          ),
         ),
       ),
     );
@@ -570,16 +639,19 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: widget.theme.colors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: widget.theme.isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
         border: Border.all(
-          color: widget.theme.colors.divider.withOpacity(0.5),
+          color: widget.theme.colors.divider.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -587,18 +659,18 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: color, size: 20),
+                  child: Icon(icon, color: color, size: 22),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -611,46 +683,50 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                             title,
                             style: TextStyle(
                               color: widget.theme.colors.cardText,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
                             ),
                           ),
                           if (badgeCount != null && badgeCount > 0) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: Colors.red,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                badgeCount.toString(),
+                                badgeCount > 99 ? '99+' : badgeCount.toString(),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                                  fontWeight: FontWeight.w700,
                                 ),
                               ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: TextStyle(
-                          color: widget.theme.colors.cardText.withOpacity(0.6),
-                          fontSize: 13,
+                          color: widget.theme.colors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.1,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Icon(
-                  Icons.chevron_right,
-                  color: widget.theme.colors.cardText.withOpacity(0.2),
-                  size: 20,
+                  Icons.chevron_right_rounded,
+                  color: widget.theme.colors.textSecondary.withOpacity(0.3),
+                  size: 24,
                 ),
               ],
             ),
@@ -666,16 +742,19 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: widget.theme.colors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: widget.theme.isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
           ),
         ],
         border: Border.all(
-          color: widget.theme.colors.divider.withOpacity(0.5),
+          color: widget.theme.colors.divider.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -693,27 +772,27 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
             );
             _loadHomeData();
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.blue.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.chat_bubble_outline,
                         color: Colors.blue,
-                        size: 20,
+                        size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,11 +803,12 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                 child: Text(
                                   conversation.displayName ??
                                       conversation.title ??
-                                      'Recent Conversation',
+                                      'Conversation',
                                   style: TextStyle(
                                     color: widget.theme.colors.cardText,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.3,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -737,49 +817,55 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                      horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
                                     color: Colors.red,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
-                                    conversation.unreadMessages.toString(),
+                                    conversation.unreadMessages > 99
+                                        ? '99+'
+                                        : conversation.unreadMessages.toString(),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
                               ],
                             ],
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Text(
                             timeAgo,
                             style: TextStyle(
-                              color:
-                                  widget.theme.colors.cardText.withOpacity(0.5),
-                              fontSize: 12,
+                              color: widget.theme.colors.textSecondary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Icon(
-                      Icons.chevron_right,
-                      color: widget.theme.colors.cardText.withOpacity(0.2),
-                      size: 20,
+                      Icons.chevron_right_rounded,
+                      color: widget.theme.colors.textSecondary.withOpacity(0.3),
+                      size: 24,
                     ),
                   ],
                 ),
                 if (conversation.lastMessagePreview != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Text(
                     conversation.lastMessagePreview!,
                     style: TextStyle(
-                      color: widget.theme.colors.cardText.withOpacity(0.7),
+                      color: widget.theme.colors.textSecondary,
                       fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      height: 1.4,
+                      letterSpacing: -0.1,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

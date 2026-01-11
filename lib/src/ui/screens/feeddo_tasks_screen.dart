@@ -18,8 +18,10 @@ class FeeddoTasksScreen extends StatefulWidget {
   State<FeeddoTasksScreen> createState() => _FeeddoTasksScreenState();
 }
 
-class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
+class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTickerProviderStateMixin {
   late FeeddoTheme _theme;
+  late TabController _tabController;
+  
   bool _isLoading = true;
   bool _isLoadingMore = false;
   String? _error;
@@ -40,6 +42,10 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
   void initState() {
     super.initState();
     _theme = widget.theme ?? FeeddoTheme.light();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabSelection);
+    
+    // Initial load
     _loadTasks(refresh: true);
     _scrollController.addListener(_onScroll);
   }
@@ -47,7 +53,27 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _tabController.dispose();
     super.dispose();
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) return;
+    
+    String? newType;
+    switch (_tabController.index) {
+      case 0: newType = null; break;
+      case 1: newType = 'feature'; break;
+      case 2: newType = 'bug'; break;
+    }
+
+    if (_filterType != newType) {
+      setState(() {
+        _filterType = newType;
+        _isLoading = true; // Show loading immediately
+      });
+      _loadTasks(refresh: true);
+    }
   }
 
   void _onScroll() {
@@ -153,7 +179,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Filter & Sort',
+                  'Sort & Filter',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -173,7 +199,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                   runSpacing: 12,
                   children: [
                     _buildFilterChip(
-                      label: 'Newest',
+                      label: 'Newest First',
                       selected: _sortBy == 'time',
                       onSelected: (selected) {
                         if (selected) setSheetState(() => _sortBy = 'time');
@@ -184,43 +210,6 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                       selected: _sortBy == 'upvotes',
                       onSelected: (selected) {
                         if (selected) setSheetState(() => _sortBy = 'upvotes');
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Type
-                Text('Type',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _theme.colors.textPrimary)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    _buildFilterChip(
-                      label: 'All',
-                      selected: _filterType == null,
-                      onSelected: (selected) {
-                        if (selected) setSheetState(() => _filterType = null);
-                      },
-                    ),
-                    _buildFilterChip(
-                      label: 'Features',
-                      selected: _filterType == 'feature',
-                      onSelected: (selected) {
-                        if (selected)
-                          setSheetState(() => _filterType = 'feature');
-                      },
-                    ),
-                    _buildFilterChip(
-                      label: 'Bugs',
-                      selected: _filterType == 'bug',
-                      onSelected: (selected) {
-                        if (selected) setSheetState(() => _filterType = 'bug');
                       },
                     ),
                   ],
@@ -264,9 +253,10 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Apply Filters'),
+                    child: const Text('Apply Changes'),
                   ),
                 ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -285,14 +275,14 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
       selected: selected,
       onSelected: onSelected,
       backgroundColor: _theme.colors.background,
-      selectedColor: _theme.colors.primary,
+      selectedColor: _theme.colors.primary.withOpacity(0.2),
       labelStyle: TextStyle(
         color: selected
-            ? (_theme.isDark ? Colors.black : Colors.white)
+            ? _theme.colors.primary
             : _theme.colors.textPrimary,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
       ),
-      checkmarkColor: _theme.isDark ? Colors.black : Colors.white,
+      checkmarkColor: _theme.colors.primary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
@@ -306,156 +296,148 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _theme.colors.background,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: FloatingActionButton(
-            onPressed: _createNewTask,
-            backgroundColor: _theme.colors.primary,
-            shape: const CircleBorder(),
-            elevation: 4,
-            child: Icon(Icons.add,
-                size: 20, color: _theme.isDark ? Colors.black : Colors.white),
-          ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _createNewTask,
+        backgroundColor: _theme.colors.primary,
+        elevation: 4,
+        icon: Icon(Icons.add,
+            color: _theme.isDark ? Colors.black : Colors.white),
+        label: Text(
+          'New Post',
+          style: TextStyle(
+            color: _theme.isDark ? Colors.black : Colors.white,
+            fontWeight: FontWeight.bold,
+          )
         ),
       ),
-      appBar: AppBar(
-        backgroundColor: _theme.colors.appBarBackground,
-        elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon:
-              Icon(Icons.arrow_back, color: _theme.colors.iconColor, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Features & Bugs',
-          style: TextStyle(
-            color: _theme.colors.textPrimary,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(Icons.filter_list,
-                    color: _theme.colors.iconColor, size: 20),
-                if (_filterType != null ||
-                    _showMyTasksOnly ||
-                    _sortBy != 'time')
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _theme.colors.error,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            backgroundColor: _theme.colors.appBarBackground,
+            title: Text(
+              'Community Board',
+              style: TextStyle(
+                color: _theme.colors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            centerTitle: true,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: _theme.colors.iconColor),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.tune_rounded, color: _theme.colors.iconColor),
+                onPressed: _showFilterSheet,
+              ),
+            ],
+            bottom: TabBar(
+              controller: _tabController,
+              dividerColor: Colors.transparent,
+              labelColor: _theme.colors.primary,
+              unselectedLabelColor: _theme.colors.textSecondary,
+              indicatorColor: _theme.colors.primary,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+              tabs: const [
+                Tab(text: 'All'),
+                Tab(text: 'Features'),
+                Tab(text: 'Bugs'),
               ],
             ),
-            onPressed: _showFilterSheet,
+            pinned: true,
+            floating: true,
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Divider(
-            height: 1,
-            color: _theme.colors.divider.withOpacity(0.1),
-          ),
-        ),
-      ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: _theme.colors.primary))
-          : _error != null && _tasks.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+        body: _isLoading
+            ? Center(
+                child: CircularProgressIndicator(color: _theme.colors.primary))
+            : _error != null && _tasks.isEmpty
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Error: $_error',
-                            style: TextStyle(color: _theme.colors.textPrimary)),
-                        TextButton(
+                        Icon(Icons.error_outline, size: 48, color: _theme.colors.error),
+                        const SizedBox(height: 16),
+                        Text('Something went wrong',
+                            style: TextStyle(color: _theme.colors.textPrimary, fontWeight: FontWeight.bold)),
+                        Text(_error!, style: TextStyle(color: _theme.colors.textSecondary)),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
                           onPressed: () => _loadTasks(refresh: true),
-                          child: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _theme.colors.primary
+                          ),
+                          child: Text('Retry', style: TextStyle(color: _theme.isDark ? Colors.black : Colors.white)),
                         ),
                       ],
                     ),
-                  ),
-                )
-              : _tasks.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('No tasks found',
-                              style:
-                                  TextStyle(color: _theme.colors.textPrimary)),
-                          if (_filterType != null || _showMyTasksOnly)
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _filterType = null;
-                                  _showMyTasksOnly = false;
-                                  _sortBy = 'time';
-                                });
-                                _loadTasks(refresh: true);
-                              },
-                              child: const Text('Clear Filters'),
+                  )
+                : _tasks.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox_rounded, size: 64, color: _theme.colors.textSecondary.withOpacity(0.5)),
+                            const SizedBox(height: 16),
+                            Text('No posts found',
+                                style: TextStyle(
+                                  color: _theme.colors.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold
+                                )
                             ),
-                        ],
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: () => _loadTasks(refresh: true),
-                      color: _theme.colors.primary,
-                      child: ListView.separated(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _tasks.length + (_hasMore ? 1 : 0),
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          if (index == _tasks.length) {
-                            return Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: _theme.colors.primary,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Be the first to create one!',
+                              style: TextStyle(color: _theme.colors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => _loadTasks(refresh: true),
+                        color: _theme.colors.primary,
+                        child: ListView.separated(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                          itemCount: _tasks.length + (_hasMore ? 1 : 0),
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            if (index == _tasks.length) {
+                              return Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: _theme.colors.primary,
+                                  ),
                                 ),
-                              ),
-                            );
-                          }
-                          final task = _tasks[index];
-                          return TaskCard(
-                            task: task,
-                            theme: _theme,
-                            onTap: () {
-                              TaskDetailsSheet.show(
-                                context,
-                                task: task,
-                                theme: _theme,
-                                onTaskUpdated: (updatedTask) {
-                                  setState(() {
-                                    _tasks[index] = updatedTask;
-                                  });
-                                },
                               );
-                            },
-                          );
-                        },
+                            }
+                            final task = _tasks[index];
+                            return TaskCard(
+                              task: task,
+                              theme: _theme,
+                              onTap: () {
+                                TaskDetailsSheet.show(
+                                  context,
+                                  task: task,
+                                  theme: _theme,
+                                  onTaskUpdated: (updatedTask) {
+                                    setState(() {
+                                      _tasks[index] = updatedTask;
+                                    });
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
                       ),
-                    ),
+      ),
     );
   }
 }

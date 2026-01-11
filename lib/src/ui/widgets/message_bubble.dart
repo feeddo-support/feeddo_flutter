@@ -185,14 +185,14 @@ class MessageBubble extends StatelessWidget {
                     if (parsedContent.content.isNotEmpty)
                       const SizedBox(height: 8),
                     ...files.map((file) {
-                      final url = (file['url'] as String).startsWith('http')
-                          ? file['url']
-                          : 'https://feeddo-backend.neloy-nr2.workers.dev${file['url']}';
+                      final fileUrl = file['url'] as String;
+                      // No need to hardcode here, AttachmentPreview handles relative URLs now
+                      // But just to be cleaner we can pass it raw
 
                       return Container(
                         margin: const EdgeInsets.only(top: 8),
                         child: AttachmentPreview(
-                          url: url,
+                          url: fileUrl,
                           contentType: file['contentType'],
                           fileName: file['fileName'],
                         ),

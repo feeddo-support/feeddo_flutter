@@ -414,8 +414,10 @@ class FeeddoInternal {
   }
 
   /// Add a comment to a task
-  Future<TaskComment> addTaskComment(String taskId, String content) async {
-    return await _apiService.addTaskComment(taskId, content, userId: userId);
+  Future<TaskComment> addTaskComment(String taskId, String content,
+      {List<Map<String, dynamic>>? attachments}) async {
+    return await _apiService.addTaskComment(taskId, content,
+        userId: userId, attachments: attachments);
   }
 
   /// Vote on a task

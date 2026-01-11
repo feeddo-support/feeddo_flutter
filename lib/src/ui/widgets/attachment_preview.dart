@@ -51,8 +51,13 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
 
   Future<void> _initializeVideo() async {
     try {
+      // If URL is relative, prepend base URL
+      final videoUrl = widget.url.startsWith('http') 
+          ? widget.url 
+          : '${FeeddoInternal.instance.apiService.apiUrl.replaceAll('/api', '')}${widget.url}';
+
       _videoController = VideoPlayerController.networkUrl(
-        Uri.parse(widget.url),
+        Uri.parse(videoUrl),
         httpHeaders: {'x-api-key': FeeddoInternal.instance.apiService.apiKey},
       );
       await _videoController!.initialize();
@@ -102,17 +107,20 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
   @override
   Widget build(BuildContext context) {
     if (_isImage) {
+      // If URL is relative, prepend base URL
+      final imageUrl = widget.url.startsWith('http') 
+          ? widget.url 
+          : '${FeeddoInternal.instance.apiService.apiUrl.replaceAll('/api', '')}${widget.url}';
+
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Image.network(
-          widget.url,
+          imageUrl,
           headers: {'x-api-key': FeeddoInternal.instance.apiService.apiKey},
           width: 200,
           height: 200,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stack) {
-            return _buildErrorWidget();
-          },
+          errorBuilder: (context, error, stack) => _buildErrorWidget(),
         ),
       );
     }

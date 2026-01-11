@@ -6,6 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+const String _apiKey = 'fdo_855f3d554d914f8da830fb27931341fb';
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 
@@ -84,7 +86,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
+        apiKey: _apiKey,
         context: context,
         notificationDuration: Duration(seconds: 10),
       );
@@ -139,7 +141,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
     try {
       final userId = await Feeddo.init(
-        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
+        apiKey: _apiKey,
         context: context,
         subscriptionStatus: 'free',
         customAttributes: {
@@ -175,7 +177,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       await Feeddo.init(
         context: context,
-        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
+        apiKey: _apiKey,
         userName: 'John Doe Updated',
         subscriptionStatus: 'premium',
         customAttributes: {
@@ -211,7 +213,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(
         context: context,
-        apiKey: 'fdo_7b963c07666b4fc38dd2114b70ef6cb6',
+        apiKey: _apiKey,
         externalUserId: 'custom-user-456',
         userName: 'Jane Smith',
         email: 'jane@example.com',

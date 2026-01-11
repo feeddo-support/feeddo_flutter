@@ -45,7 +45,7 @@ class Task {
       priority: json['priority'] ?? 'medium',
       type: json['type'] ?? 'feature',
       upvoteCount: json['upvoteCount'] ?? 0,
-      commentCount: json['commentCount'] ?? 0,
+      commentCount: json['commentCount'] ?? commentsList.length,
       myVote: json['myVote'],
       comments: commentsList,
       isOwner: json['isOwner'] ?? false,

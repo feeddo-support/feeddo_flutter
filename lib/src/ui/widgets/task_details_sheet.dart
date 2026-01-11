@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../feeddo_client.dart';
 import '../../models/task.dart';
 import '../../theme/feeddo_theme.dart';
 import '../screens/feeddo_chat_screen.dart';
 import 'chat_input_area.dart';
+import 'attachment_preview.dart';
 
 class TaskDetailsSheet extends StatefulWidget {
   final String? taskId;
@@ -49,6 +51,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmittingComment = false;
   late FeeddoTheme _theme;
+  final List<Map<String, dynamic>> _attachments = [];
+  bool _isUploadingMedia = false;
 
   @override
   void initState() {
@@ -57,9 +61,9 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
     if (widget.task != null) {
       _task = widget.task;
       _isLoading = false;
-    } else {
-      _loadTask();
     }
+    // Always load task to get latest data including comments
+    _loadTask();
   }
 
   Future<void> _loadTask() async {
@@ -327,8 +331,24 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(comment.content,
-                        style: TextStyle(color: _theme.colors.textPrimary)),
+                    if (comment.content.isNotEmpty)
+                      Text(comment.content,
+                          style: TextStyle(color: _theme.colors.textPrimary)),
+                    if (comment.hasAttachments &&
+                        comment.attachments != null &&
+                        comment.attachments!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ...comment.attachments!.map(
+                        (attachment) => Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: AttachmentPreview(
+                            url: attachment['url'],
+                            contentType: attachment['mimeType'],
+                            fileName: attachment['fileName'],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               )),
@@ -337,31 +357,96 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
   }
 
   Widget _buildCommentInput() {
-    return ChatInputArea(
-      controller: _commentController,
-      onSend: _submitComment,
-      isSending: _isSubmittingComment,
-      hintText: 'Add a comment...',
-      withShadow: true,
-      theme: _theme,
-      onAttachment: () {
-        // TODO: Implement attachment
-      },
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Show attachment previews
+        if (_attachments.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _theme.colors.background,
+              border: Border(
+                top: BorderSide(color: _theme.colors.divider),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _attachments.map((attachment) {
+                      return Stack(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _theme.colors.border,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: AttachmentPreview(
+                                url: attachment['url'],
+                                contentType: attachment['mimeType'],
+                                fileName: attachment['fileName'],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: -4,
+                            right: -4,
+                            child: IconButton(
+                              icon: Icon(Icons.cancel,
+                                  color: _theme.colors.error, size: 20),
+                              onPressed: () {
+                                setState(() {
+                                  _attachments.remove(attachment);
+                                });
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ChatInputArea(
+          controller: _commentController,
+          onSend: _submitComment,
+          isSending: _isSubmittingComment || _isUploadingMedia,
+          hintText: 'Add a comment...',
+          withShadow: true,
+          theme: _theme,
+          onAttachment: _pickAndUploadMedia,
+        ),
+      ],
     );
   }
 
   Future<void> _submitComment() async {
-    if (_commentController.text.trim().isEmpty) return;
+    if (_commentController.text.trim().isEmpty && _attachments.isEmpty) return;
 
     setState(() => _isSubmittingComment = true);
     try {
       await FeeddoInternal.instance.addTaskComment(
         _task!.id,
         _commentController.text.trim(),
+        attachments: _attachments.isNotEmpty ? _attachments : null,
       );
       if (!mounted) return;
 
       _commentController.clear();
+      _attachments.clear();
 
       // Reload task to show new comment
       // If we were passed a task object, we need to reload it from API to get the new comment
@@ -491,6 +576,49 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
           SnackBar(content: Text('Failed to vote: $e')),
         );
         widget.onTaskUpdated?.call(oldTask);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadMedia() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    final userId = FeeddoInternal.instance.userId;
+
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User not identified')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isUploadingMedia = true;
+    });
+
+    try {
+      final media = await FeeddoInternal.instance.conversationService
+          .uploadMedia(image, userId);
+
+      if (mounted) {
+        setState(() {
+          _attachments.add(media);
+          _isUploadingMedia = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload media: $e')),
+        );
+        setState(() {
+          _isUploadingMedia = false;
+        });
       }
     }
   }

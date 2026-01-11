@@ -83,7 +83,7 @@ class ApiService {
   /// Get home data for a user
   Future<HomeData> getHomeData(String userId) async {
     final url = Uri.parse('$apiUrl/end-users/home?userId=$userId');
-
+    print(url.toString());
     try {
       final response = await _client.get(
         url,
@@ -483,7 +483,7 @@ class ApiService {
 
   /// Add a comment to a task
   Future<TaskComment> addTaskComment(String taskId, String content,
-      {String? userId}) async {
+      {String? userId, List<Map<String, dynamic>>? attachments}) async {
     final uri =
         Uri.parse('$apiUrl/tasks/$taskId/comments').replace(queryParameters: {
       if (userId != null) 'userId': userId,
@@ -491,6 +491,8 @@ class ApiService {
 
     final body = {
       'content': content,
+      if (attachments != null && attachments.isNotEmpty)
+        'attachments': attachments,
     };
 
     try {
