@@ -628,4 +628,19 @@ class FeeddoInternal {
       });
     }
   }
+
+  /// Open the Community Board screen (Feature Requests & Bug Reports)
+  static void showCommunityBoard(
+    BuildContext context, {
+    FeeddoTheme? theme,
+  }) {
+    final effectiveTheme = theme ?? FeeddoTheme.dark();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => FeeddoTasksScreen(theme: effectiveTheme),
+        fullscreenDialog: true,
+      ),
+    );
+  }
 }

@@ -80,6 +80,17 @@ class Feeddo {
     );
   }
 
+  /// Open the Community Board screen (Feature Requests & Bug Reports)
+  static void showCommunityBoard(
+    BuildContext context, {
+    FeeddoTheme? theme,
+  }) {
+    FeeddoInternal.showCommunityBoard(
+      context,
+      theme: theme,
+    );
+  }
+
   static void showInappNotification({
     required BuildContext context,
     required String title,

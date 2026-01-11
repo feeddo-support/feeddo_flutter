@@ -405,6 +405,19 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
                   foregroundColor: Colors.white,
                 ),
               ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () => Feeddo.showCommunityBoard(
+                  context,
+                  theme: FeeddoTheme.dark(),
+                ),
+                icon: const Icon(Icons.forum),
+                label: const Text('Open Community Board'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.white,
+                ),
+              ),
 
               const SizedBox(height: 32),
 
