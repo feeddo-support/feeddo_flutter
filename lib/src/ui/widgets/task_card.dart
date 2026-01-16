@@ -5,12 +5,14 @@ import '../../theme/feeddo_theme.dart';
 class TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onTap;
+  final Function(String voteType)? onVote;
   final FeeddoTheme theme;
 
   const TaskCard({
     super.key,
     required this.task,
     required this.onTap,
+    this.onVote,
     required this.theme,
   });
 
@@ -79,8 +81,7 @@ class TaskCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         task.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        
                         style: TextStyle(
                           fontSize: 13,
                           color: theme.colors.textSecondary,
@@ -121,31 +122,36 @@ class TaskCard extends StatelessWidget {
     // Assuming myVote being non-null implies an upvote for now
     final isUpvoted = task.myVote != null;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-      decoration: BoxDecoration(
-        color: theme.colors.background.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colors.border.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.keyboard_arrow_up_rounded,
-            color:
-                isUpvoted ? theme.colors.primary : theme.colors.textSecondary,
-            size: 24,
-          ),
-          Text(
-            _formatCount(task.upvoteCount),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: isUpvoted ? theme.colors.primary : theme.colors.cardText,
+    return GestureDetector(
+      onTap: onVote != null
+          ? () => onVote!(isUpvoted && task.myVote == 'up' ? 'remove' : 'up')
+          : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        decoration: BoxDecoration(
+          color: theme.colors.background.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colors.border.withValues(alpha: 0.5)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.keyboard_arrow_up_rounded,
+              color:
+                  isUpvoted ? theme.colors.primary : theme.colors.textSecondary,
+              size: 24,
             ),
-          ),
-        ],
+            Text(
+              _formatCount(task.upvoteCount),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: isUpvoted ? theme.colors.primary : theme.colors.cardText,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

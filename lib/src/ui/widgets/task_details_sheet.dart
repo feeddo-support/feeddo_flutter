@@ -539,6 +539,7 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
     final optimisticTask = oldTask.copyWith(
       upvoteCount: newUpvoteCount,
       myVote: newMyVote == 'none' ? null : newMyVote,
+      clearMyVote: newMyVote == 'none',
     );
 
     setState(() {

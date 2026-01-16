@@ -421,6 +421,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
                             return TaskCard(
                               task: task,
                               theme: _theme,
+                              onVote: (voteType) => _handleVote(task, voteType),
                               onTap: () {
                                 TaskDetailsSheet.show(
                                   context,
@@ -440,4 +441,60 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
       ),
     );
   }
+  
+  Future<void> _handleVote(Task task, String voteType) async {
+    // 1. Calculate optimistic state
+    final oldUpvoteCount = task.upvoteCount;
+    final oldMyVote = task.myVote;
+    
+    int newUpvoteCount = oldUpvoteCount;
+    String? newMyVote;
+    
+    // Only handling 'up' and 'remove' based on TaskCard logic for now
+    if (voteType == 'remove') {
+       if (oldMyVote == 'up') newUpvoteCount--;
+       newMyVote = null;
+    } else if (voteType == 'up') {
+       if (oldMyVote != 'up') newUpvoteCount++;
+       newMyVote = 'up';
+    }
+
+    final updatedTask = task.copyWith(
+       upvoteCount: newUpvoteCount,
+       myVote: newMyVote,
+       clearMyVote: newMyVote == null,
+    );
+    
+    // 2. Update UI
+    setState(() {
+      final index = _tasks.indexWhere((t) => t.id == task.id);
+      if (index != -1) {
+        _tasks[index] = updatedTask;
+      }
+    });
+
+    try {
+       // 3. Call API
+       String apiVoteType = voteType == 'remove' ? 'none' : voteType;
+       await FeeddoInternal.instance.voteTask(task.id, apiVoteType); 
+    } catch (e) {
+       // Revert on error
+       if (mounted) {
+          setState(() {
+             final index = _tasks.indexWhere((t) => t.id == task.id);
+             if (index != -1) {
+                  // Revert to old values
+                   // Actually we need to reconstruct perfectly. 
+                   // A simpler way is just to not update UI until API returns, but that feels slow.
+                   // Or just reload.
+                   _tasks[index] = task; // 'task' is the original object
+             }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Failed to vote: $e')),
+          );
+       }
+    }
+  }
+
 }
