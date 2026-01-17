@@ -275,7 +275,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
       selected: selected,
       onSelected: onSelected,
       backgroundColor: _theme.colors.background,
-      selectedColor: _theme.colors.primary.withOpacity(0.2),
+      selectedColor: _theme.colors.primary.withValues(alpha: 0.2),
       labelStyle: TextStyle(
         color: selected
             ? _theme.colors.primary
@@ -379,7 +379,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inbox_rounded, size: 64, color: _theme.colors.textSecondary.withOpacity(0.5)),
+                            Icon(Icons.inbox_rounded, size: 64, color: _theme.colors.textSecondary.withValues(alpha: 0.5)),
                             const SizedBox(height: 16),
                             Text('No posts found',
                                 style: TextStyle(

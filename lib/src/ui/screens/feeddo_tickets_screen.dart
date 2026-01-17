@@ -78,7 +78,7 @@ class _FeeddoTicketsScreenState extends State<FeeddoTicketsScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Divider(
             height: 1,
-            color: _theme.colors.divider.withOpacity(0.1),
+            color: _theme.colors.divider.withValues(alpha: 0.1),
           ),
         ),
       ),

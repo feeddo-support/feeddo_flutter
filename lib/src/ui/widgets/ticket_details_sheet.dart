@@ -10,13 +10,12 @@ class TicketDetailsSheet extends StatefulWidget {
   final FeeddoTheme? theme;
 
   const TicketDetailsSheet({
-    Key? key,
+    super.key,
     this.ticketId,
     this.ticket,
     this.theme,
   })  : assert(ticketId != null || ticket != null,
-            'Either ticketId or ticket must be provided'),
-        super(key: key);
+            'Either ticketId or ticket must be provided');
 
   static Future<void> show(BuildContext context,
       {String? ticketId, Ticket? ticket, FeeddoTheme? theme}) {
@@ -148,7 +147,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
         // Header
         Row(
           children: [
-            Icon(
+            const Icon(
               Icons.confirmation_number,
               color: Colors.blue,
               size: 20,
@@ -167,13 +166,13 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: ticket.isResolved
-                    ? _theme.colors.success.withOpacity(0.1)
-                    : Colors.orange.withOpacity(0.1),
+                    ? _theme.colors.success.withValues(alpha: 0.1)
+                    : Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: ticket.isResolved
-                      ? _theme.colors.success.withOpacity(0.2)
-                      : Colors.orange.withOpacity(0.2),
+                      ? _theme.colors.success.withValues(alpha: 0.2)
+                      : Colors.orange.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -226,7 +225,7 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

@@ -9,9 +9,9 @@ class FeeddoNotificationsSheet extends StatefulWidget {
   final FeeddoTheme theme;
 
   const FeeddoNotificationsSheet({
-    Key? key,
+    super.key,
     required this.theme,
-  }) : super(key: key);
+  });
 
   @override
   State<FeeddoNotificationsSheet> createState() =>
@@ -91,7 +91,7 @@ class _FeeddoNotificationsSheetState extends State<FeeddoNotificationsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: widget.theme.colors.textSecondary.withOpacity(0.2),
+                color: widget.theme.colors.textSecondary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -176,7 +176,7 @@ class _FeeddoNotificationsSheetState extends State<FeeddoNotificationsSheet> {
             Icon(
               Icons.notifications_none_outlined,
               size: 64,
-              color: widget.theme.colors.textSecondary.withOpacity(0.5),
+              color: widget.theme.colors.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -220,7 +220,7 @@ class _FeeddoNotificationsSheetState extends State<FeeddoNotificationsSheet> {
           color: widget.theme.colors.cardBackground,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: widget.theme.colors.border.withOpacity(0.5),
+            color: widget.theme.colors.border.withValues(alpha: 0.5),
           ),
         ),
         child: Row(
@@ -230,7 +230,7 @@ class _FeeddoNotificationsSheetState extends State<FeeddoNotificationsSheet> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: widget.theme.colors.primary.withOpacity(0.1),
+                color: widget.theme.colors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(

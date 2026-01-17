@@ -80,8 +80,9 @@ class EndUser {
     if (deviceModel != null) json['deviceModel'] = deviceModel;
     if (osVersion != null) json['osVersion'] = osVersion;
     if (userSegment != null) json['userSegment'] = userSegment;
-    if (subscriptionStatus != null)
+    if (subscriptionStatus != null) {
       json['subscriptionStatus'] = subscriptionStatus;
+    }
     if (customAttributes != null) json['customAttributes'] = customAttributes;
     if (pushToken != null) json['pushToken'] = pushToken;
     if (pushProvider != null) json['pushProvider'] = pushProvider!.value;

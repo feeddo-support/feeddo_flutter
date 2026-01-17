@@ -14,14 +14,13 @@ class TaskDetailsSheet extends StatefulWidget {
   final FeeddoTheme? theme;
 
   const TaskDetailsSheet({
-    Key? key,
+    super.key,
     this.taskId,
     this.task,
     this.onTaskUpdated,
     this.theme,
   })  : assert(taskId != null || task != null,
-            'Either taskId or task must be provided'),
-        super(key: key);
+            'Either taskId or task must be provided');
 
   static Future<void> show(BuildContext context,
       {String? taskId,
@@ -486,10 +485,10 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? activeColor.withOpacity(0.1) : Colors.grey.shade100,
+          color: isActive ? activeColor.withValues(alpha: 0.1) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? activeColor.withOpacity(0.3) : Colors.transparent,
+            color: isActive ? activeColor.withValues(alpha: 0.3) : Colors.transparent,
           ),
         ),
         child: Row(

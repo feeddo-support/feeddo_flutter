@@ -17,15 +17,14 @@ class FeeddoNotificationBadge extends StatefulWidget {
   final FeeddoTheme? theme;
 
   const FeeddoNotificationBadge({
-    Key? key,
+    super.key,
     this.conversation,
     this.title,
     this.body,
     this.onTap,
     this.onDismiss,
     this.theme,
-  })  : assert(conversation != null || (title != null && body != null)),
-        super(key: key);
+  })  : assert(conversation != null || (title != null && body != null));
 
   @override
   State<FeeddoNotificationBadge> createState() =>
@@ -136,14 +135,14 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                       spreadRadius: -2,
                     ),
                   ],
                   border: Border.all(
-                    color: theme.colors.border.withOpacity(0.5),
+                    color: theme.colors.border.withValues(alpha: 0.5),
                     width: 1,
                   ),
                 ),
@@ -160,7 +159,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: theme.colors.primary.withOpacity(0.1),
+                            color: theme.colors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
@@ -228,7 +227,7 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
                             child: Icon(
                               Icons.close_rounded,
                               color:
-                                  theme.colors.textSecondary.withOpacity(0.7),
+                                  theme.colors.textSecondary.withValues(alpha: 0.7),
                               size: 16,
                             ),
                           ),

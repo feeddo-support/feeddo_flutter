@@ -200,7 +200,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
             // Avatar
             CircleAvatar(
               radius: 20,
-              backgroundColor: _theme.colors.primary.withOpacity(0.1),
+              backgroundColor: _theme.colors.primary.withValues(alpha: 0.1),
               child: Text(
                 (conversation.displayName ?? conversation.title ?? '?')
                     .substring(0, 1)
@@ -324,7 +324,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(

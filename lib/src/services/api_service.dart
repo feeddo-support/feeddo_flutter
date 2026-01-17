@@ -440,8 +440,9 @@ class ApiService {
     if (sortOrder != null) queryParams['sortOrder'] = sortOrder;
     if (page != null) queryParams['page'] = page.toString();
     if (limit != null) queryParams['limit'] = limit.toString();
-    if (createdByMe != null)
+    if (createdByMe != null) {
       queryParams['createdByMe'] = createdByMe.toString();
+    }
 
     final uri =
         Uri.parse('$apiUrl/tasks').replace(queryParameters: queryParams);

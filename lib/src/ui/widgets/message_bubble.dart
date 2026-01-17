@@ -10,12 +10,12 @@ class MessageBubble extends StatelessWidget {
   final Widget? ticketCard;
 
   const MessageBubble({
-    Key? key,
+    super.key,
     required this.message,
     required this.theme,
     this.taskCard,
     this.ticketCard,
-  }) : super(key: key);
+  });
 
   ({String content, String? taskId, String? ticketId}) _parseMessageContent(
       String content) {
@@ -145,7 +145,7 @@ class MessageBubble extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: message.role == 'human'
                                 ? const Color.fromARGB(255, 100, 81, 244)
-                                : theme.colors.primary.withOpacity(0.1),
+                                : theme.colors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(32),
                           ),
                           child: Icon(
@@ -197,7 +197,7 @@ class MessageBubble extends StatelessWidget {
                           fileName: file['fileName'],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                   if (taskCard != null) taskCard!,
                   if (ticketCard != null) ticketCard!,
@@ -209,8 +209,8 @@ class MessageBubble extends StatelessWidget {
                       style: TextStyle(
                         color: isUser
                             ? (theme.isDark
-                                ? Colors.black.withOpacity(0.7)
-                                : Colors.white.withOpacity(0.7))
+                                ? Colors.black.withValues(alpha: 0.7)
+                                : Colors.white.withValues(alpha: 0.7))
                             : theme.colors.textSecondary,
                         fontSize: 11,
                       ),

@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-const String _apiKey = 'fdo_f5c90984c1eb4e31ae67e4bb0dfee228';
+const String _apiKey = 'fdo_855f3d554d914f8da830fb27931341fb';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();

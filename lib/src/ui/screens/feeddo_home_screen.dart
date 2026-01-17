@@ -253,7 +253,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: widget.theme.colors.primary.withOpacity(0.3),
+                      color: widget.theme.colors.primary.withValues(alpha: 0.3),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                       spreadRadius: 0,
@@ -431,7 +431,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                     'Powered by ',
                                     style: TextStyle(
                                       color: widget.theme.colors.textSecondary
-                                          .withOpacity(0.4),
+                                          .withValues(alpha: 0.4),
                                       fontSize: 13,
                                       letterSpacing: -0.1,
                                     ),
@@ -440,7 +440,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                     FeeddoInternal.instance.chatBotName,
                                     style: TextStyle(
                                       color: widget.theme.colors.textSecondary
-                                          .withOpacity(0.6),
+                                          .withValues(alpha: 0.6),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       letterSpacing: -0.1,
@@ -469,14 +469,14 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: widget.theme.isDark
-                                  ? Colors.black.withOpacity(0.2)
-                                  : Colors.black.withOpacity(0.04),
+                                  ? Colors.black.withValues(alpha: 0.2)
+                                  : Colors.black.withValues(alpha: 0.04),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
                           ],
                           border: Border.all(
-                            color: widget.theme.colors.divider.withOpacity(0.2),
+                            color: widget.theme.colors.divider.withValues(alpha: 0.2),
                             width: 1,
                           ),
                         ),
@@ -530,14 +530,14 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: widget.theme.isDark
-                              ? Colors.black.withOpacity(0.2)
-                              : Colors.black.withOpacity(0.04),
+                              ? Colors.black.withValues(alpha: 0.2)
+                              : Colors.black.withValues(alpha: 0.04),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
                       border: Border.all(
-                        color: widget.theme.colors.divider.withOpacity(0.2),
+                        color: widget.theme.colors.divider.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
@@ -578,7 +578,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: onPrimaryColor.withOpacity(0.15),
+                    color: onPrimaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(Icons.send_rounded,
@@ -602,7 +602,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                       Text(
                         'We\'re here to help',
                         style: TextStyle(
-                          color: onPrimaryColor.withOpacity(0.8),
+                          color: onPrimaryColor.withValues(alpha: 0.8),
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                           letterSpacing: -0.1,
@@ -636,15 +636,15 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
         boxShadow: [
           BoxShadow(
             color: widget.theme.isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.04),
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 0,
           ),
         ],
         border: Border.all(
-          color: widget.theme.colors.divider.withOpacity(0.3),
+          color: widget.theme.colors.divider.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -660,7 +660,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: color, size: 22),
@@ -718,7 +718,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: widget.theme.colors.textSecondary.withOpacity(0.3),
+                  color: widget.theme.colors.textSecondary.withValues(alpha: 0.3),
                   size: 24,
                 ),
               ],
@@ -739,15 +739,15 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
         boxShadow: [
           BoxShadow(
             color: widget.theme.isDark
-                ? Colors.black.withOpacity(0.2)
-                : Colors.black.withOpacity(0.04),
+                ? Colors.black.withValues(alpha: 0.2)
+                : Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
             spreadRadius: 0,
           ),
         ],
         border: Border.all(
-          color: widget.theme.colors.divider.withOpacity(0.3),
+          color: widget.theme.colors.divider.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -776,7 +776,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.12),
+                        color: Colors.blue.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -844,7 +844,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                     const SizedBox(width: 8),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: widget.theme.colors.textSecondary.withOpacity(0.3),
+                      color: widget.theme.colors.textSecondary.withValues(alpha: 0.3),
                       size: 24,
                     ),
                   ],

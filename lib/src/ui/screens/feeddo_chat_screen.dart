@@ -22,11 +22,11 @@ class FeeddoChatScreen extends StatefulWidget {
   final String? initialMessage;
 
   const FeeddoChatScreen({
-    Key? key,
+    super.key,
     this.conversation,
     this.theme,
     this.initialMessage,
-  }) : super(key: key);
+  });
 
   @override
   State<FeeddoChatScreen> createState() => _FeeddoChatScreenState();
@@ -108,12 +108,10 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     FeeddoInternal.instance.connectWebSocket(conversationId: _conversation?.id);
 
     final wsService = FeeddoInternal.instance.webSocketService;
-    if (wsService != null) {
-      _wsSubscription = wsService.messages.listen((data) {
-        _handleWebSocketMessage(data);
-      });
+    _wsSubscription = wsService.messages.listen((data) {
+      _handleWebSocketMessage(data);
+    });
     }
-  }
 
   void _handleWebSocketMessage(Map<String, dynamic> data) {
     debugPrint('ChatScreen: Received WebSocket message: $data');
@@ -391,7 +389,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
           if (didPop) return;
           Navigator.of(context).pop(_hasSentMessage);
         },
@@ -404,7 +402,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(1),
               child: Container(
-                color: theme.colors.divider.withOpacity(0.1),
+                color: theme.colors.divider.withValues(alpha: 0.1),
                 height: 1,
               ),
             ),
@@ -423,7 +421,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colors.primary.withOpacity(0.2),
+                        color: theme.colors.primary.withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -592,7 +590,6 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
   void _sendAttachmentMessage(Map<String, dynamic> media) {
     final wsService = FeeddoInternal.instance.webSocketService;
-    if (wsService == null) return;
 
     // Optimistically add message
     final tempMessage = Message(
@@ -766,12 +763,6 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     if (text.isEmpty) return;
 
     final wsService = FeeddoInternal.instance.webSocketService;
-    if (wsService == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not connected to chat server')),
-      );
-      return;
-    }
 
     setState(() {
       _isSending = true;

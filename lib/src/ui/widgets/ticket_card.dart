@@ -9,11 +9,11 @@ class TicketCard extends StatelessWidget {
   final FeeddoTheme theme;
 
   const TicketCard({
-    Key? key,
+    super.key,
     required this.ticket,
     this.onTap,
     required this.theme,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class TicketCard extends StatelessWidget {
           border: Border.all(color: theme.colors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -58,13 +58,13 @@ class TicketCard extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: ticket.isResolved
-                        ? theme.colors.success.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
+                        ? theme.colors.success.withValues(alpha: 0.1)
+                        : Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: ticket.isResolved
-                          ? theme.colors.success.withOpacity(0.2)
-                          : Colors.orange.withOpacity(0.2),
+                          ? theme.colors.success.withValues(alpha: 0.2)
+                          : Colors.orange.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Text(

@@ -12,7 +12,7 @@ class ChatInputArea extends StatelessWidget {
   final FocusNode? focusNode;
 
   const ChatInputArea({
-    Key? key,
+    super.key,
     required this.controller,
     required this.onSend,
     this.onAttachment,
@@ -21,7 +21,7 @@ class ChatInputArea extends StatelessWidget {
     this.withShadow = false,
     this.theme,
     this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class ChatInputArea extends StatelessWidget {
         boxShadow: withShadow
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),

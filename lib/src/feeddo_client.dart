@@ -51,7 +51,7 @@ class FeeddoInternal {
   // Private constructor
   FeeddoInternal._(String apiKey)
       : _apiService = ApiService(
-          apiUrl: 'https://feeddo-backend-prod.tithipal699.workers.dev/api',
+          apiUrl: 'https://feeddo-backend.tithipal699.workers.dev/api',
           apiKey: apiKey,
         ) {
     _webSocketService = WebSocketService(
@@ -138,7 +138,7 @@ class FeeddoInternal {
     // Store context and notification settings
     _instance!._notificationContext = context;
     _instance!._isInAppNotificationOn =
-        isInAppNotificationOn && context != null;
+        isInAppNotificationOn;
     _instance!._notificationTheme = theme ?? FeeddoTheme.dark();
     if (notificationDuration != null) {
       _instance!._notificationDuration = notificationDuration;
@@ -158,7 +158,6 @@ class FeeddoInternal {
 
     // Automatically show notification if there are unread messages
     if (isInAppNotificationOn &&
-        context != null &&
         _instance!._recentConversation != null) {
       final recentConv = _instance!._recentConversation!;
       if (recentConv.unreadMessages > 0) {
@@ -174,7 +173,7 @@ class FeeddoInternal {
     }
 
     // Setup real-time notification listener if enabled
-    if (isInAppNotificationOn && context != null) {
+    if (isInAppNotificationOn) {
       _instance!._setupNotificationListener();
     }
 
@@ -514,7 +513,7 @@ class FeeddoInternal {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
+                      color: Colors.black.withValues(alpha: 0.15),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),

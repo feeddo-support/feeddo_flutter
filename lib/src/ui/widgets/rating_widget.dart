@@ -38,7 +38,6 @@ class _RatingWidgetState extends State<RatingWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTheme = widget.theme ?? FeeddoTheme.light();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {

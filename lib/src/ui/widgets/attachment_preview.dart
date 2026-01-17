@@ -9,11 +9,11 @@ class AttachmentPreview extends StatefulWidget {
   final String? fileName;
 
   const AttachmentPreview({
-    Key? key,
+    super.key,
     required this.url,
     this.contentType,
     this.fileName,
-  }) : super(key: key);
+  });
 
   @override
   State<AttachmentPreview> createState() => _AttachmentPreviewState();
