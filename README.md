@@ -15,6 +15,38 @@ Feeddo is an AI-powered customer support widget for your Flutter app. Here's wha
 
 All this drops right into your app with zero hassle.
 
+## Screenshots
+
+### 1. Simple & Clean Home
+Your users get a clean dashboard to manage their conversations and tickets.
+
+<p align="center">
+  <img src="screenshots/Home.png" height="500" alt="Home Screen" />
+</p>
+
+### 2. AI Support Agent
+If a user asks how to do something, the AI agent searches your docs and answers instantly.
+
+<p align="center">
+  <img src="screenshots/chat_example1.png" height="500" alt="AI Chat Answer" />
+</p>
+
+### 3. Smart Bug Reporting
+If a user reports a bug, the agent automatically gathers details and creates a bug report for you.
+
+<p align="center">
+  <img src="screenshots/chatexample2.png" height="500" alt="Bug Report Conversation" />
+  &nbsp;&nbsp;&nbsp;
+  <img src="screenshots/chat_example3.png" height="500" alt="Bug Ticket Created" />
+</p>
+
+### 4. Community Board
+Other users can see feature requests and reported bugs, upvote them, and add comments.
+
+<p align="center">
+  <img src="screenshots/community_board.png" height="500" alt="Community Board" />
+</p>
+
 ## Installation
 
 Add to your `pubspec.yaml`:
@@ -126,31 +158,7 @@ await Feeddo.init(
 
 ## Notifications Setup
 
-Feeddo has two types of notifications:
-
-### 1. In-App Notifications (Automatic)
-
-When someone replies to your user's message, a notification slides down from the top of the screen. This works automatically if you set `context` in `init()`.
-
-```dart
-await Feeddo.init(
-  apiKey: 'your-api-key',
-  context: context,  // This enables in-app notifications
-  isInAppNotificationOn: true,  // Default is true
-);
-```
-
-To turn off in-app notifications:
-
-```dart
-await Feeddo.init(
-  apiKey: 'your-api-key',
-  context: context,
-  isInAppNotificationOn: false,  // No in-app notifications
-);
-```
-
-### 2. Push Notifications (Optional)
+### Push Notifications
 
 If you haven't set up push notifications in your app yet, please follow the [Firebase Cloud Messaging Get Started guide](https://firebase.google.com/docs/cloud-messaging/flutter/get-started) to configure your project.
 

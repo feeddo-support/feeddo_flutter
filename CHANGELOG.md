@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2026-01-17
+
+### Added
+- Complete UI overhaul for chat and support screens.
+- Added support for dark/light themes and custom coloring.
+- Integrated WebSocket support for real-time chat.
+- Added community board for Feature Requests and Bug Reports.
+- Added push notification support (FCM).
+- Improved API client and error handling.
+
 ## [0.0.1] - 2024-11-18
 
 ### Added
