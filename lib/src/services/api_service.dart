@@ -83,7 +83,6 @@ class ApiService {
   /// Get home data for a user
   Future<HomeData> getHomeData(String userId) async {
     final url = Uri.parse('$apiUrl/end-users/home?userId=$userId');
-    print(url.toString());
     try {
       final response = await _client.get(
         url,
@@ -278,8 +277,6 @@ class ApiService {
         },
       );
 
-      print(response.body);
-
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         final messagesList = json['messages'] as List;
@@ -315,8 +312,6 @@ class ApiService {
           'x-api-key': apiKey,
         },
       );
-
-      print(response.body);
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -447,8 +442,6 @@ class ApiService {
     final uri =
         Uri.parse('$apiUrl/tasks').replace(queryParameters: queryParams);
 
-    print(uri.toString());
-
     try {
       final response = await _client.get(
         uri,
@@ -505,8 +498,6 @@ class ApiService {
         },
         body: jsonEncode(body),
       );
-
-      print(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;

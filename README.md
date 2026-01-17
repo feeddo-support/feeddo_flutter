@@ -1,27 +1,27 @@
 # Feeddo Flutter SDK
 
-AI-powered customer support and feedback widget for Flutter applications. Automatically collects device information and manages end users.
+Drop a live AI support chat into your Flutter app with just 2 lines of code.
 
-## Features
+## What is Feeddo?
 
-✅ **End User Management**: Create and update end users with comprehensive information  
-✅ **Automatic Device Info**: Auto-collects platform, device model, OS version, app version  
-✅ **Backend User ID Management**: User IDs generated and managed by Feeddo backend  
-✅ **Data Persistence**: All user data saved to SharedPreferences automatically  
-✅ **Custom Attributes**: Store custom key-value pairs for user segmentation  
-✅ **In-App Notifications**: Instagram-style notifications for unread messages  
-✅ **Real-time Updates**: WebSocket-based message notifications  
-✅ **Cross-Platform**: Works on iOS, Android, Web, macOS, Windows, Linux  
-✅ **Type Safe**: Full TypeScript-like type safety with Dart  
-✅ **Geo Detection**: Country and locale automatically detected from IP address by backend  
+Feeddo is an AI-powered customer support widget for your Flutter app. Here's what it does:
+
+- **AI Agent** handles simple questions by reading your docs and FAQs
+- **Auto-creates support tickets** when the AI can't solve the issue
+- **Live chat** - You can jump in and chat directly with users
+- **Smart bug tracking** - Auto-detects and creates issues for bug reports
+- **Feature requests** - Captures and organizes feature requests from users
+- **Community board** - Let users vote on feature requests and see known bugs
+
+All this drops right into your app with zero hassle.
 
 ## Installation
 
-Add this to your package's `pubspec.yaml` file:
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.0.1
+  feeddo_flutter: ^0.0.5
 ```
 
 Then run:
@@ -32,164 +32,15 @@ flutter pub get
 
 ## Quick Start
 
-### 1. Initialize Feeddo
+### 1. Get Your API Key
+
+Sign up at [feeddo.dev](https://feeddo.dev) and grab your API key from the dashboard.
+
+### 2. Initialize Feeddo
+
+Call `Feeddo.init()` when your app starts (usually in your main screen):
 
 ```dart
-import 'package:feeddo_flutter/feeddo_flutter.dart';
-
-// Initialize Feeddo - notifications are automatically handled!
-final result = await Feeddo.init(
-  apiKey: 'your-api-key',
-  context: context, // Optional: pass context to enable notifications
-  userName: 'John Doe',
-  email: 'john@example.com',
-  isInAppNotificationOn: true, // Default is true - automatically shows notifications
-  theme: FeeddoTheme.dark(),
-);
-
-// That's it! Notifications will automatically show for:
-// - Unread messages on init
-// - New messages from WebSocket
-```
-
-### 2. Initialize Without Notifications
-
-```dart
-// If you don't want notifications, just omit the context
-final result = await Feeddo.init(
-  apiKey: 'your-api-key',
-  userName: 'John Doe',
-  email: 'john@example.com',
-);
-```
-
-### 3. Open Support Widget
-
-```dart
-// Open Feeddo support screen
-Feeddo.show(context, theme: FeeddoTheme.dark());
-```
-
-### 4. Clean Up (Optional)
-
-```dart
-// When user logs out
-Feeddo.dispose();
-```
-
-## In-App Notifications
-
-Feeddo includes Instagram-style in-app notifications that work automatically!
-
-**Simple Setup:**
-```dart
-final result = await Feeddo.init(
-  apiKey: 'your-key',
-  context: context, // Just pass context!
-  isInAppNotificationOn: true, // That's all you need!
-);
-```
-
-**Features:**
-- 🎨 Beautiful slide-in notification banners
-- 📬 Automatically shows unread messages on init
-- ⚡ Automatically shows new WebSocket messages
-- 🎯 Tap to open conversation
-- ⏱️ Auto-dismiss after 5 seconds
-- 🎨 Dark/light theme support
-- 🚀 Zero configuration required!
-
-📖 **[Read the full Notification Guide →](NOTIFICATION_GUIDE.md)**  
-⚡ **[Quick Reference →](NOTIFICATION_QUICKREF.md)**
-
-## API Reference
-
-### FeeddoClient
-
-Main client for interacting with Feeddo services.
-
-#### Constructor
-
-```dart
-FeeddoClient({
-  required String appId,        // Your Feeddo app ID
-  String apiUrl = 'https://api.feeddo.dev',  // API base URL
-})
-```
-
-#### Methods
-
-##### initializeUser()
-
-Initialize or update a user session. Automatically collects device information and manages user ID via SharedPreferences.
-
-```dart
-Future<String> initializeUser({
-  String? externalUserId,                  // Your system's user ID
-  String? userName,                        // User's display name
-  String? email,                          // User's email
-  String? userSegment,                    // Custom user segment
-  String? subscriptionStatus,             // Subscription status
-  Map<String, dynamic>? customAttributes, // Custom data
-})
-```
-
-**Returns**: User ID (String)
-
-**Behavior**: 
-- First call: Creates new user, backend generates ID, saves to SharedPreferences
-- Subsequent calls: Loads ID from SharedPreferences, updates user data
-- User ID is automatically managed - no need to store it yourself
-
-**Example**:
-```dart
-// First call - creates user
-final userId = await feeddo.initializeUser(
-  externalUserId: 'user-456',
-  userName: 'Jane Doe',
-  email: 'jane@example.com',
-);
-
-// Later - updates user (reuses stored ID)
-await feeddo.initializeUser(
-  externalUserId: 'user-456',
-  userName: 'Jane Smith',  // Updated
-);
-```
-
-##### clearUser()
-
-Clear the current user session and remove from SharedPreferences.
-
-```dart
-Future<void> clearUser()
-```
-
-**Throws**: `StateError` if no user is initialized
-
-**Example**:
-```dart
-await feeddo.clearUser();
-print('User session cleared');
-```
-
-## Automatically Collected Information
-
-The SDK automatically collects device information:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| `platform` | Platform type | `ios`, `android`, `web`, `desktop` |
-| `deviceModel` | Device model | `iPhone 14`, `Pixel 7`, `macOS MacBookPro` |
-| `osVersion` | OS version | `iOS 17.0`, `Android 13 (SDK 33)` |
-| `appVersion` | Your app version | `1.2.3` |
-
-**Note**: `country` and `locale` are automatically detected by the backend from the user's IP address, so you don't need to collect them manually.
-
-## Complete Example
-
-```dart
-import 'package:flutter/material.dart';
 import 'package:feeddo_flutter/feeddo_flutter.dart';
 
 class MyApp extends StatefulWidget {
@@ -198,117 +49,299 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late final FeeddoClient _feeddo;
-
   @override
   void initState() {
     super.initState();
-    
-    // Initialize Feeddo
-    _feeddo = FeeddoClient(appId: 'your-app-id');
-    
-    // Initialize user
-    _initializeUser();
+    _initializeFeeddo();
   }
 
-  Future<void> _initializeUser() async {
-    try {
-      final userId = await _feeddo.initializeUser(
-        externalUserId: 'user-123',
-        userName: 'John Doe',
-        email: 'john@example.com',
-        subscriptionStatus: 'free',
-        customAttributes: {
-          'signupDate': DateTime.now().toIso8601String(),
-        },
-      );
-      print('User initialized: $userId');
-    } on FeeddoApiException catch (e) {
-      print('Failed to initialize user: ${e.message}');
-    }
-  }
-
-  @override
-  void dispose() {
-    _feeddo.dispose();
-    super.dispose();
+  Future<void> _initializeFeeddo() async {
+    await Feeddo.init(
+      apiKey: 'your-api-key-here',  // Get this from feeddo.dev
+      context: context,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: Text('My App')),
-        body: Center(child: Text('Hello Feeddo!')),
-      ),
+      home: HomeScreen(),
     );
   }
 }
 ```
 
-## Best Practices
+### 3. Show the Support Chat
 
-### 1. Initialize Early
+Add a button anywhere in your app to open the support widget:
 
-Initialize the user as early as possible in your app lifecycle.
-
-### 2. Persist User ID
-
-Store the user ID locally for subsequent app launches using SharedPreferences or similar.
-
-### 3. Update on Profile Changes
-
-Update user info when they modify their profile.
-
-### 4. Handle Errors Gracefully
-
-Always handle API errors with try-catch blocks.
-
-### 5. Custom Attributes for Segmentation
-
-Use custom attributes for user segmentation and analytics.
-
-## File Structure
-
-```
-feeddo_flutter/
-├── lib/
-│   ├── feeddo_flutter.dart              # Main entry point
-│   └── src/
-│       ├── feeddo_client.dart           # Main client class
-│       ├── models/
-│       │   └── end_user.dart            # EndUser model
-│       ├── services/
-│       │   └── api_service.dart         # API service
-│       └── utils/
-│           └── device_info_helper.dart  # Device info helper
-├── example/
-│   └── lib/
-│       └── main.dart                    # Example app
-└── README.md
+```dart
+ElevatedButton(
+  onPressed: () {
+    Feeddo.show(context);  // Opens the support home screen
+  },
+  child: Text('Get Help'),
+)
 ```
 
-## Platform Support
+That's it! Your users can now chat with the AI and create support tickets.
 
-| Platform | Supported | Auto Device Info |
-|----------|-----------|------------------|
-| iOS | ✅ Yes | ✅ Yes |
-| Android | ✅ Yes | ✅ Yes |
-| Web | ✅ Yes | ✅ Yes |
-| macOS | ✅ Yes | ✅ Yes |
-| Windows | ✅ Yes | ✅ Yes |
-| Linux | ✅ Yes | ✅ Yes |
+### 4. Show the Community Board
 
-## Dependencies
+Want to show just the feature requests and bug reports? Use this:
 
-- `http`: ^1.2.0 - HTTP client
-- `device_info_plus`: ^10.1.0 - Device information
-- `package_info_plus`: ^8.0.0 - Package/app information
+```dart
+ElevatedButton(
+  onPressed: () {
+    Feeddo.showCommunityBoard(context);  // Opens feature requests & bugs
+  },
+  child: Text('Feature Requests'),
+)
+```
+
+## Understanding `Feeddo.init()`
+
+The `init()` method sets up Feeddo with your user data. Here's what each parameter does:
+
+```dart
+await Feeddo.init(
+  // Required: Your API key from feeddo.dev
+  apiKey: 'your-api-key',
+  
+  // Required: The BuildContext for showing notifications
+  context: context,
+  
+  // Optional: Your app's user ID (links Feeddo to your users)
+  externalUserId: 'user_12345',
+  
+  // Optional: User's display name (appears in chats)
+  userName: 'John Doe',
+  
+  // Optional: User's email
+  email: 'john@example.com',
+  
+  // Optional: Segment your users (e.g., 'pro', 'free', 'trial')
+  userSegment: 'premium',
+  
+  // Optional: Track subscription status
+  subscriptionStatus: 'active',
+  
+  // Optional: Any extra data you want to track
+  customAttributes: {
+    'plan': 'pro',
+    'signupDate': '2026-01-01',
+    'country': 'US',
+  },
+  
+  // Optional: Enable/disable in-app notifications (default: true)
+  isInAppNotificationOn: true,
+  
+  // Optional: Push notification token (for remote notifications)
+  pushToken: 'fcm-token-here',
+  
+  // Optional: Push provider (fcm, apns, or onesignal)
+  pushProvider: FeeddoPushProvider.fcm,
+);
+```
+
+**Returns:** The `userId` that Feeddo created for this user.
+
+## Notifications Setup
+
+Feeddo has two types of notifications:
+
+### 1. In-App Notifications (Automatic)
+
+When someone replies to your user's message, a notification slides down from the top of the screen. This works automatically if you set `context` in `init()`.
+
+```dart
+await Feeddo.init(
+  apiKey: 'your-api-key',
+  context: context,  // This enables in-app notifications
+  isInAppNotificationOn: true,  // Default is true
+);
+```
+
+To turn off in-app notifications:
+
+```dart
+await Feeddo.init(
+  apiKey: 'your-api-key',
+  context: context,
+  isInAppNotificationOn: false,  // No in-app notifications
+);
+```
+
+### 2. Push Notifications (Optional)
+
+To get notifications even when the app is closed, register your push token:
+
+```dart
+// When you get the FCM token
+await Feeddo.registerPushToken(
+  pushToken: 'your-fcm-token',
+  pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
+);
+```
+
+Or pass it directly to `init()`:
+
+```dart
+await Feeddo.init(
+  apiKey: 'your-api-key',
+  context: context,
+  pushToken: 'your-fcm-token',
+  pushProvider: FeeddoPushProvider.fcm,
+);
+```
+
+When a push notification arrives, handle it like this:
+
+```dart
+// In your notification handler
+Map<String, dynamic> notificationData = {
+  'type': 'chat_message',
+  'conversationId': 'conv_123',
+  // ... other data from the notification
+};
+
+Feeddo.handleNotificationTap(context, notificationData);
+```
+
+## Customizing Colors
+
+Feeddo comes with dark and light themes, but you can customize any color:
+
+### Using Built-in Themes
+
+```dart
+// Dark theme (default)
+Feeddo.show(context, theme: FeeddoTheme.dark());
+
+// Light theme
+Feeddo.show(context, theme: FeeddoTheme.light());
+```
+
+### Custom Colors
+
+Create your own theme by customizing colors:
+
+```dart
+final myTheme = FeeddoTheme(
+  isDark: true,
+  colors: FeeddoColors(
+    // Main background
+    background: Color(0xFF1A1A2E),
+    
+    // Text colors
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFB0B0B0),
+    
+    // Primary action color (buttons, links)
+    primary: Color(0xFF00D9FF),
+    
+    // Cards and surfaces
+    cardBackground: Color(0xFF252540),
+    surface: Color(0xFF252540),
+    
+    // App bar
+    appBarBackground: Color(0xFF1A1A2E),
+    
+    // Status colors
+    success: Color(0xFF4CAF50),
+    error: Color(0xFFFF5252),
+    
+    // Borders and dividers
+    border: Color(0xFF3A3A5C),
+    divider: Color(0xFF2A2A3E),
+  ),
+);
+
+// Use it when showing Feeddo
+Feeddo.show(context, theme: myTheme);
+```
+
+You can also apply the theme to notifications and the community board:
+
+```dart
+// Show with custom theme
+Feeddo.show(context, theme: myTheme);
+Feeddo.showCommunityBoard(context, theme: myTheme);
+
+// Set default theme in init()
+await Feeddo.init(
+  apiKey: 'your-api-key',
+  context: context,
+  theme: myTheme,  // This theme will be used for notifications
+);
+```
+
+### Available Colors
+
+| Color Property | What it controls |
+|----------------|------------------|
+| `background` | Main screen background |
+| `textPrimary` | Primary text (titles, main content) |
+| `textSecondary` | Secondary text (timestamps, hints) |
+| `cardBackground` | Background of cards and message bubbles |
+| `primary` | Primary buttons, links, active elements |
+| `surface` | Secondary surfaces (bottom sheets) |
+| `success` | Success states, completed tasks |
+| `error` | Error states, urgent notifications |
+| `border` | Borders around inputs and cards |
+| `divider` | Separators between items |
+| `appBarBackground` | Top navigation bar background |
+
+### Gradient Background
+
+Want a gradient background? Easy:
+
+```dart
+final gradientTheme = FeeddoTheme(
+  isDark: true,
+  colors: FeeddoColors(
+    background: Color(0xFF1A1A2E),  // Fallback color
+    backgroundGradient: [
+      Color(0xFF1A1A2E),
+      Color(0xFF16213E),
+      Color(0xFF0F3460),
+    ],
+  ),
+);
+```
+
+## Update User Info
+
+Need to update user info after they sign up or change their profile?
+
+```dart
+await Feeddo.updateUser(
+  userName: 'Jane Smith',
+  email: 'jane@example.com',
+  userSegment: 'enterprise',
+);
+```
+
+## Show Unread Message Count
+
+Want to show a badge with unread messages?
+
+```dart
+int unreadCount = Feeddo.unreadMessageCount;
+
+// Use it in your UI
+Badge(
+  label: Text('$unreadCount'),
+  child: Icon(Icons.chat),
+)
+```
+
+## Need Help?
+
+- **Docs:** [docs.feeddo.dev](https://docs.feeddo.dev)
+- **Website:** [feeddo.dev](https://feeddo.dev)
+- **Issues:** [GitHub Issues](https://github.com/feeddo/feeddo-flutter/issues)
 
 ## License
 
-See LICENSE file.
-
-## Support
-
-For issues and questions, visit [feeddo.dev](https://feeddo.dev)
+MIT License - see LICENSE file for details

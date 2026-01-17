@@ -87,9 +87,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(
         apiKey: _apiKey,
-        context: context,
-        notificationDuration: Duration(seconds: 10),
-      );
+        context: context);
 
       Feeddo.registerPushToken(
         pushToken: token!,
