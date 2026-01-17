@@ -10,13 +10,13 @@ topics:
   - community
 screenshots:
   - description: 'Simple & Clean Home Dashboard'
-    path: screenshots/Home.png
+    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/Home.png
   - description: 'AI Support Agent Chat'
-    path: screenshots/chat_example1.png
+    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145945942859746e/screenshots/chat_example1.png
   - description: 'Smart Bug Reporting'
-    path: screenshots/chatexample2.png
+    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chatexample2.png
   - description: 'Community Board'
-    path: screenshots/community_board.png
+    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/community_board.png
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
