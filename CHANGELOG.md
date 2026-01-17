@@ -1,6 +1,23 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [0.1.3] - 2026-01-17
+### Updated
+- Added github repo
+
+## [0.1.2] - 2026-01-17
+### Updated
+- Updated screenshots to readme.md
+
+## [0.1.0] - 2026-01-17
+### Updated
+- Added screenshots to pubspec.yaml
+
+## [0.1.0] - 2026-01-17
+### Updated
+- Added screenshots to pubspec.yaml
+
 ## [0.0.9] - 2026-01-17
 ### Updated
 - Added screenshots to pubspec.yaml

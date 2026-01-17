@@ -1,7 +1,8 @@
 name: feeddo_flutter
 description: "Feeddo Flutter SDK - AI-powered customer support and feedback widget for Flutter apps"
-version: 0.0.7
+version: 0.1.3
 homepage: https://feeddo.dev
+repository: https://github.com/feeddo-support/feeddo_flutter
 topics:
   - feedback
   - customer-support

@@ -21,30 +21,30 @@ All this drops right into your app with zero hassle.
 Your users get a clean dashboard to manage their conversations and tickets.
 
 <p align="center">
-  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/Home.png" height="500" alt="Home Screen" />
+  <img src="https://raw.githubusercontent.com/feeddo-support/feeddo_flutter/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/Home.png" height="500" alt="Home Screen" />
 </p>
 
 ### 2. AI Support Agent
 If a user asks how to do something, the AI agent searches your docs and answers instantly.
 
 <p align="center">
-  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example1.png" height="500" alt="AI Chat Answer" />
+  <img src="https://raw.githubusercontent.com/feeddo-support/feeddo_flutter/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example1.png" height="500" alt="AI Chat Answer" />
 </p>
 
 ### 3. Smart Bug Reporting
 If a user reports a bug, the agent automatically gathers details and creates a bug report for you.
 
 <p align="center">
-  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chatexample2.png" height="500" alt="Bug Report Conversation" />
+  <img src="https://raw.githubusercontent.com/feeddo-support/feeddo_flutter/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chatexample2.png" height="500" alt="Bug Report Conversation" />
   &nbsp;&nbsp;&nbsp;
-  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example3.png" height="500" alt="Bug Ticket Created" />
+  <img src="https://raw.githubusercontent.com/feeddo-support/feeddo_flutter/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example3.png" height="500" alt="Bug Ticket Created" />
 </p>
 
 ### 4. Community Board
 Other users can see feature requests and reported bugs, upvote them, and add comments.
 
 <p align="center">
-  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/community_board.png" height="500" alt="Community Board" />
+  <img src="https://raw.githubusercontent.com/feeddo-support/feeddo_flutter/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/community_board.png" height="500" alt="Community Board" />
 </p>
 
 ## Installation
@@ -53,7 +53,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.0.7
+  feeddo_flutter: ^0.1.2
 ```
 
 Then run:
