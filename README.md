@@ -21,7 +21,7 @@ All this drops right into your app with zero hassle.
 Your users get a clean dashboard to manage their conversations and tickets.
 
 <p align="center">
-  <img src="screenshots/Home.png" height="500" alt="Home Screen" />
+  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/Home.png" height="500" alt="Home Screen" />
 </p>
 
 ### 2. AI Support Agent

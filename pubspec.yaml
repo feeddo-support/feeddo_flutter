@@ -1,6 +1,6 @@
 name: feeddo_flutter
 description: "Feeddo Flutter SDK - AI-powered customer support and feedback widget for Flutter apps"
-version: 0.0.9
+version: 0.0.7
 homepage: https://feeddo.dev
 topics:
   - feedback
@@ -10,13 +10,13 @@ topics:
   - community
 screenshots:
   - description: 'Simple & Clean Home Dashboard'
-    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/Home.png
+    path: screenshots/Home.png
   - description: 'AI Support Agent Chat'
-    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145945942859746e/screenshots/chat_example1.png
+    path: screenshots/chat_example1.png
   - description: 'Smart Bug Reporting'
-    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chatexample2.png
+    path: screenshots/chatexample2.png
   - description: 'Community Board'
-    path: https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/community_board.png
+    path: screenshots/community_board.png
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
