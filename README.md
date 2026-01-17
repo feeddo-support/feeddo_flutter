@@ -43,32 +43,10 @@ Call `Feeddo.init()` when your app starts (usually in your main screen):
 ```dart
 import 'package:feeddo_flutter/feeddo_flutter.dart';
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  @override
-  void initState() {
-    super.initState();
-    _initializeFeeddo();
-  }
-
-  Future<void> _initializeFeeddo() async {
-    await Feeddo.init(
+await Feeddo.init(
       apiKey: 'your-api-key-here',  // Get this from feeddo.dev
       context: context,
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: HomeScreen(),
-    );
-  }
-}
 ```
 
 ### 3. Show the Support Chat
@@ -95,7 +73,7 @@ ElevatedButton(
   onPressed: () {
     Feeddo.showCommunityBoard(context);  // Opens feature requests & bugs
   },
-  child: Text('Feature Requests'),
+  child: Text('Request a feature'),
 )
 ```
 
@@ -174,12 +152,14 @@ await Feeddo.init(
 
 ### 2. Push Notifications (Optional)
 
+If you haven't set up push notifications in your app yet, please follow the [Firebase Cloud Messaging Get Started guide](https://firebase.google.com/docs/cloud-messaging/flutter/get-started) to configure your project.
+
 To get notifications even when the app is closed, register your push token:
 
 ```dart
 // When you get the FCM token
 await Feeddo.registerPushToken(
-  pushToken: 'your-fcm-token',
+  pushToken: 'your-push-token',
   pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
 );
 ```
@@ -190,7 +170,7 @@ Or pass it directly to `init()`:
 await Feeddo.init(
   apiKey: 'your-api-key',
   context: context,
-  pushToken: 'your-fcm-token',
+  pushToken: 'your-push-token',
   pushProvider: FeeddoPushProvider.fcm,
 );
 ```
