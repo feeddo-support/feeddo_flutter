@@ -35,16 +35,16 @@ If a user asks how to do something, the AI agent searches your docs and answers 
 If a user reports a bug, the agent automatically gathers details and creates a bug report for you.
 
 <p align="center">
-  <img src="screenshots/chatexample2.png" height="500" alt="Bug Report Conversation" />
+  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chatexample2.png" height="500" alt="Bug Report Conversation" />
   &nbsp;&nbsp;&nbsp;
-  <img src="screenshots/chat_example3.png" height="500" alt="Bug Ticket Created" />
+  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example3.png" height="500" alt="Bug Ticket Created" />
 </p>
 
 ### 4. Community Board
 Other users can see feature requests and reported bugs, upvote them, and add comments.
 
 <p align="center">
-  <img src="screenshots/community_board.png" height="500" alt="Community Board" />
+  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/community_board.png" height="500" alt="Community Board" />
 </p>
 
 ## Installation
