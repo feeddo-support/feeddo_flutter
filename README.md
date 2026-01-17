@@ -53,7 +53,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.0.5
+  feeddo_flutter: ^0.0.7
 ```
 
 Then run:
@@ -61,6 +61,20 @@ Then run:
 ```bash
 flutter pub get
 ```
+
+## iOS Setup
+
+Feeddo requires a minimum deployment target of **iOS 15.0**.
+
+1. Open your project in Xcode (open `ios/Runner.xcworkspace`).
+2. Select the **Runner** project in the left navigation panel.
+3. In the project targets list, select **Runner**.
+4. Select the **General** tab.
+5. In the **Deployment Info** section, set **Minimum Deployments** to **15.0**.
+6. Make sure your `ios/Podfile` also specifies platform 15.0:
+   ```ruby
+   platform :ios, '15.0'
+   ```
 
 ## Quick Start
 
