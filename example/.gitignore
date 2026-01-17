@@ -50,3 +50,5 @@ app.*.map.json
 firebase.json
 /lib/firebase_options.dart
 .metadata
+/example/lib/firebase_options.dart
+/feeddo_flutter/lib/firebase_options.dart

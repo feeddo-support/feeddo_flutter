@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-const String _apiKey = 'fdo_855f3d554d914f8da830fb27931341fb';
+const String _apiKey = 'your token here';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -103,18 +103,10 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        print('A new onMessageOpenedApp event was published!');
-        print('Message data: ${message.data}');
-        print('Message notification: ${message.notification?.title}');
-        print('Message notification: ${message.notification?.body}');
         Feeddo.handleNotificationTap(context, message.data);
       });
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('Received a message while in the foreground!');
-        print('Message data: ${message.data}');
-        print('Message notification: ${message.notification?.title}');
-        print('Message notification: ${message.notification?.body}');
         Feeddo.showInappNotification(
           context: context,
           title: message.notification?.title ?? 'New Message',

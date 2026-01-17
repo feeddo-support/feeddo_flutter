@@ -178,14 +178,20 @@ await Feeddo.init(
 When a push notification arrives, handle it like this:
 
 ```dart
-// In your notification handler
-Map<String, dynamic> notificationData = {
-  'type': 'chat_message',
-  'conversationId': 'conv_123',
-  // ... other data from the notification
-};
+// Handle notification tap when app is in background/terminated
+FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  Feeddo.handleNotificationTap(context, message.data);
+});
 
-Feeddo.handleNotificationTap(context, notificationData);
+// Handle notification when app is in foreground
+FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  Feeddo.showInappNotification(
+    context: context,
+    title: message.notification?.title ?? 'New Message',
+    message: message.notification?.body ?? '',
+    data: message.data,
+  );
+});
 ```
 
 ## Customizing Colors

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'config/feeddo_config.dart';
 import 'services/api_service.dart';
 import 'services/websocket_service.dart';
 import 'services/conversation_service.dart';
@@ -51,7 +52,7 @@ class FeeddoInternal {
   // Private constructor
   FeeddoInternal._(String apiKey)
       : _apiService = ApiService(
-          apiUrl: 'https://feeddo-backend.tithipal699.workers.dev/api',
+          apiUrl: FeeddoConfig.apiUrl,
           apiKey: apiKey,
         ) {
     _webSocketService = WebSocketService(
