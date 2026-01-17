@@ -28,7 +28,7 @@ Your users get a clean dashboard to manage their conversations and tickets.
 If a user asks how to do something, the AI agent searches your docs and answers instantly.
 
 <p align="center">
-  <img src="screenshots/chat_example1.png" height="500" alt="AI Chat Answer" />
+  <img src="https://github.com/feeddo-support/feeddo_flutter/blob/341da25d67f3a9a7d0d845ceab7145942859746e/screenshots/chat_example1.png" height="500" alt="AI Chat Answer" />
 </p>
 
 ### 3. Smart Bug Reporting
