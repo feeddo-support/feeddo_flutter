@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2026-01-18
+### Updated
+- Sort option fix
+
+## [0.1.4] - 2026-01-18
+### Updated
+- Notification guild doc chnage
+
 ## [0.1.3] - 2026-01-17
 ### Updated
 - Added github repo

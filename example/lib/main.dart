@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-const String _apiKey = 'fdo_f2fcd845ebbe45569fb9a07f033171de';
+const String _apiKey = 'fdo_f5c90984c1eb4e31ae67e4bb0dfee228';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -74,7 +74,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       provisional: false,
       sound: true,
     );
-    String? token = await messaging.getToken();
+    String? token = await FirebaseMessaging.instance.getToken();
 
     if (kDebugMode) {
       print('Registration Token=$token');

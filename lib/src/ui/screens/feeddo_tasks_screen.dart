@@ -28,7 +28,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
   List<Task> _tasks = [];
 
   // Filters & Sort
-  String _sortBy = 'time'; // 'time' or 'upvotes'
+  String _sortBy = 'upvotes'; // 'time' or 'upvotes'
   String? _filterType; // null, 'feature', 'bug'
   bool _showMyTasksOnly = false;
 
@@ -246,8 +246,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _theme.colors.primary,
-                      foregroundColor:
-                          _theme.isDark ? Colors.black : Colors.white,
+                      foregroundColor: _theme.isDark ? Colors.black : Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -275,14 +274,14 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
       selected: selected,
       onSelected: onSelected,
       backgroundColor: _theme.colors.background,
-      selectedColor: _theme.colors.primary.withValues(alpha: 0.2),
+      selectedColor: _theme.colors.primary.withValues(alpha:1),
       labelStyle: TextStyle(
         color: selected
-            ? _theme.colors.primary
-            : _theme.colors.textPrimary,
+            ? _theme.colors.background // Keep primary color when selected
+            : _theme.colors.textPrimary, // Use textPrimary (white in dark mode)
         fontWeight: selected ? FontWeight.bold : FontWeight.normal,
       ),
-      checkmarkColor: _theme.colors.primary,
+      checkmarkColor: _theme.colors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(

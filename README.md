@@ -4,7 +4,7 @@ Drop a live AI support chat into your Flutter app with just 2 lines of code.
 
 ## What is Feeddo?
 
-Feeddo is an AI-powered customer support widget for your Flutter app. Here's what it does:
+Feeddo is an AI-powered customer support widget for your Flutter app. Beining the best **Intercom alternative for Flutter**, Feeddo provides a native, lightweight, and AI-first experience. Here's what it does:
 
 - **AI Agent** handles simple questions by reading your docs and FAQs
 - **Auto-creates support tickets** when the AI can't solve the issue
@@ -53,7 +53,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.1.2
+  feeddo_flutter: ^0.1.4
 ```
 
 Then run:
@@ -174,14 +174,26 @@ await Feeddo.init(
 
 ### Push Notifications
 
-If you haven't set up push notifications in your app yet, please follow the [Firebase Cloud Messaging Get Started guide](https://firebase.google.com/docs/cloud-messaging/flutter/get-started) to configure your project.
+**1. Configure App & Dashboard**
+
+To allow Feeddo to send push notifications, you need to provide your Firebase Service Account credentials:
+
+1.  Go to the [Firebase Console](https://console.firebase.google.com/) > Project Settings > Service accounts.
+2.  Click **Generate new private key** to download the JSON file.
+3.  Go to [feeddo.dev](https://feeddo.dev), select your app, and navigate to **Settings > Notifications**.
+4.  Select **Google (FCM)** and upload the JSON file (or paste its contents).
+
+If you haven't set up push notifications in your Flutter app yet, follow the [Firebase Cloud Messaging Get Started guide](https://firebase.google.com/docs/cloud-messaging/flutter/get-started).
+
+**2. Register Your Token**
 
 To get notifications even when the app is closed, register your push token:
 
 ```dart
+String? token = await FirebaseMessaging.instance.getToken();
 // When you get the FCM token
 await Feeddo.registerPushToken(
-  pushToken: 'your-push-token',
+  pushToken: token,
   pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
 );
 ```
