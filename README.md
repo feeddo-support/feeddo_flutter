@@ -53,7 +53,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.1.8
+  feeddo_flutter: ^0.1.9
 ```
 
 Then run:

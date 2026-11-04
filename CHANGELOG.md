@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2026-11-04
+### Updated
+- Updated base API URL to production `https://api.feeddo.dev/api`.
+
 ## [0.1.8] - 2026-11-04
 ### Added
 - Lazy user initialization: caches user profile locally and delays server upsert until UI is opened or notifications require it, significantly reducing backend DB calls.
