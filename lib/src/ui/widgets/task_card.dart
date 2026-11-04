@@ -119,12 +119,11 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildVoteColumn(BuildContext context) {
-    // Assuming myVote being non-null implies an upvote for now
-    final isUpvoted = task.myVote != null;
+    final isUpvoted = task.myVote == 'up';
 
     return GestureDetector(
       onTap: onVote != null
-          ? () => onVote!(isUpvoted && task.myVote == 'up' ? 'remove' : 'up')
+          ? () => onVote!(isUpvoted ? 'remove' : 'up')
           : null,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
@@ -247,7 +246,7 @@ class TaskCard extends StatelessWidget {
   }
 
   String _formatCount(int count) {
-    if (count >= 1000) {
+    if (count.abs() >= 1000) {
       return '${(count / 1000).toStringAsFixed(1)}k';
     }
     return count.toString();

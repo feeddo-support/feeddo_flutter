@@ -514,25 +514,43 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
     );
   }
 
+  bool _isVoting = false;
+
   Future<void> _voteTask(String voteType) async {
-    if (_task == null) return;
+    if (_task == null || _isVoting) return;
+    _isVoting = true;
 
     // Optimistic update
     final oldTask = _task!;
     final oldMyVote = oldTask.myVote;
 
-    // Calculate new counts
+    // Calculate new net score (upvotes - downvotes)
     int newUpvoteCount = oldTask.upvoteCount;
-
-    // Remove old vote
-    if (oldMyVote == 'up') newUpvoteCount--;
-
-    // Add new vote (if not toggling off)
     String newMyVote = voteType;
+
     if (oldMyVote == voteType) {
-      newMyVote = 'none'; // Toggle off
+      // Toggle off (remove vote)
+      newMyVote = 'none';
+      if (oldMyVote == 'up') {
+        newUpvoteCount -= 1;
+      } else if (oldMyVote == 'down') {
+        newUpvoteCount += 1;
+      }
     } else {
-      if (voteType == 'up') newUpvoteCount++;
+      // Adding new vote or switching vote
+      if (voteType == 'up') {
+        if (oldMyVote == 'down') {
+          newUpvoteCount += 2;
+        } else {
+          newUpvoteCount += 1;
+        }
+      } else if (voteType == 'down') {
+        if (oldMyVote == 'up') {
+          newUpvoteCount -= 2;
+        } else {
+          newUpvoteCount -= 1;
+        }
+      }
     }
 
     final optimisticTask = oldTask.copyWith(
@@ -558,6 +576,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
       if (serverUpvoteCount != null) {
         final updatedTask = _task!.copyWith(
           upvoteCount: serverUpvoteCount,
+          myVote: newMyVote == 'none' ? null : newMyVote,
+          clearMyVote: newMyVote == 'none',
         );
         if (mounted) {
           setState(() {
@@ -577,6 +597,8 @@ class _TaskDetailsSheetState extends State<TaskDetailsSheet> {
         );
         widget.onTaskUpdated?.call(oldTask);
       }
+    } finally {
+      _isVoting = false;
     }
   }
 

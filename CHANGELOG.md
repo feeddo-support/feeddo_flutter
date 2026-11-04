@@ -2,7 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.4] - 2026-01-18
+## [0.1.8] - 2026-11-04
+### Added
+- Lazy user initialization: caches user profile locally and delays server upsert until UI is opened or notifications require it, significantly reducing backend DB calls.
+- Track first app open timestamp (`firstSeenAt`) during user upsert.
+- Net community score display (`upvote - downvote`) on community board tasks.
+- `Feeddo.dispose()` for resetting SDK state and disconnecting WebSockets on logout.
+- Desktop and Web floating window constraints customization.
+- Complete platform setup documentation for iOS, Android, and macOS/Desktop.
+
+## [0.1.7] - 2026-01-24
+### Updated
+- init method update
+
+## [0.1.6] - 2026-01-18
+### Updated
+- Sort option fix
+
+## [0.1.5] - 2026-01-18
 ### Updated
 - Sort option fix
 

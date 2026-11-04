@@ -4,7 +4,7 @@ Drop a live AI support chat into your Flutter app with just 2 lines of code.
 
 ## What is Feeddo?
 
-Feeddo is an AI-powered customer support widget for your Flutter app. Beining the best **Intercom alternative for Flutter**, Feeddo provides a native, lightweight, and AI-first experience. Here's what it does:
+Feeddo is an AI-powered customer support widget for your Flutter app. Being the best **Intercom alternative for Flutter**, Feeddo provides a native, lightweight, and AI-first experience. Here's what it does:
 
 - **AI Agent** handles simple questions by reading your docs and FAQs
 - **Auto-creates support tickets** when the AI can't solve the issue
@@ -53,7 +53,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  feeddo_flutter: ^0.1.4
+  feeddo_flutter: ^0.1.8
 ```
 
 Then run:
@@ -62,7 +62,9 @@ Then run:
 flutter pub get
 ```
 
-## iOS Setup
+## Platform Setup
+
+### iOS Setup
 
 Feeddo requires a minimum deployment target of **iOS 15.0**.
 
@@ -75,6 +77,33 @@ Feeddo requires a minimum deployment target of **iOS 15.0**.
    ```ruby
    platform :ios, '15.0'
    ```
+
+### Android Setup
+
+Feeddo requires Android `minSdkVersion 21` or higher and Internet permissions:
+
+1. In `android/app/build.gradle` (or `build.gradle.kts`), ensure `minSdkVersion` is at least 21:
+   ```groovy
+   android {
+       defaultConfig {
+           minSdkVersion 21
+       }
+   }
+   ```
+2. In `android/app/src/main/AndroidManifest.xml`, make sure the Internet permission is present:
+   ```xml
+   <uses-permission android:name="android.permission.INTERNET"/>
+   ```
+
+### macOS & Desktop Setup
+
+Feeddo supports macOS, Windows, Linux, and Web out of the box.
+
+For macOS, ensure network client entitlement is enabled in `macos/Runner/DebugProfile.entitlements` and `Release.entitlements`:
+```xml
+<key>com.apple.security.network.client</key>
+<true/>
+```
 
 ## Quick Start
 
@@ -191,20 +220,24 @@ To get notifications even when the app is closed, register your push token:
 
 ```dart
 String? token = await FirebaseMessaging.instance.getToken();
-// When you get the FCM token
-await Feeddo.registerPushToken(
-  pushToken: token,
-  pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
-);
+if (token != null) {
+  // When you get the FCM token
+  await Feeddo.registerPushToken(
+    pushToken: token,
+    pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
+  );
+}
 ```
 
 Or pass it directly to `init()`:
 
 ```dart
+String? token = await FirebaseMessaging.instance.getToken();
+
 await Feeddo.init(
   apiKey: 'your-api-key',
   context: context,
-  pushToken: 'your-push-token',
+  pushToken: token,
   pushProvider: FeeddoPushProvider.fcm,
 );
 ```
@@ -354,6 +387,31 @@ Badge(
   label: Text('$unreadCount'),
   child: Icon(Icons.chat),
 )
+```
+
+## Desktop & Web Floating Widget
+
+On Desktop (macOS, Windows, Linux) and Web, Feeddo automatically opens as a sleek Intercom-style floating window in the bottom-right corner rather than a full-screen view.
+
+You can customize the desktop popup window constraints:
+
+```dart
+Feeddo.show(
+  context,
+  useSmallWindowOnDesktop: true, // Default: true (set to false for fullscreen dialog)
+  desktopConstraints: const BoxConstraints(
+    maxWidth: 420,
+    maxHeight: 650,
+  ),
+);
+```
+
+## User Logout & Cleanup
+
+When a user logs out of your app, call `Feeddo.dispose()` to reset SDK state, disconnect WebSockets, and clear active notifications:
+
+```dart
+Feeddo.dispose();
 ```
 
 ## Need Help?

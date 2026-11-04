@@ -10,6 +10,8 @@ class WebSocketService {
   String? _userId;
   bool _isDisposed = false;
   bool _isConnected = false;
+  int _retryCount = 0;
+  static const int _maxRetries = 3;
 
   final _messageController = StreamController<Map<String, dynamic>>.broadcast();
   Stream<Map<String, dynamic>> get messages => _messageController.stream;
@@ -21,9 +23,17 @@ class WebSocketService {
 
   String? _currentConversationId;
 
-  Future<void> connect({required String userId, String? conversationId}) async {
+  Future<void> connect({
+    required String userId,
+    String? conversationId,
+    bool isRetry = false,
+  }) async {
     _isDisposed = false;
     _userId = userId;
+
+    if (!isRetry) {
+      _retryCount = 0;
+    }
 
     // If connected and conversationId matches (or both null), do nothing
     if (_isConnected) {
@@ -65,6 +75,8 @@ class WebSocketService {
 
       _channel!.stream.listen(
         (data) {
+          // Successful message received, reset retry count
+          _retryCount = 0;
           try {
             debugPrint('WebSocket: Received: $data');
             final decoded = jsonDecode(data);
@@ -76,12 +88,12 @@ class WebSocketService {
         onError: (e) {
           debugPrint('WebSocket: Error: $e');
           _isConnected = false;
-          _reconnect();
+         // _reconnect();
         },
         onDone: () {
           debugPrint('WebSocket: Connection closed');
           _isConnected = false;
-          _reconnect();
+          //_reconnect();
         },
       );
 
@@ -89,17 +101,31 @@ class WebSocketService {
     } catch (e) {
       debugPrint('WebSocket: Connection failed: $e');
       _isConnected = false;
-      _reconnect();
+      //_reconnect();
     }
   }
 
+  // ignore: unused_element
   void _reconnect() {
     if (_isDisposed || _userId == null) return;
+
+    if (_retryCount >= _maxRetries) {
+      debugPrint('WebSocket: Max retries ($_maxRetries) reached. Giving up.');
+      return;
+    }
+
+    _retryCount++;
+    debugPrint(
+        'WebSocket: Reconnecting (Attempt $_retryCount/$_maxRetries)...');
 
     // Simple reconnection logic
     Future.delayed(const Duration(seconds: 5), () {
       if (!_isDisposed && !_isConnected) {
-        connect(userId: _userId!, conversationId: _currentConversationId);
+        connect(
+          userId: _userId!,
+          conversationId: _currentConversationId,
+          isRetry: false,
+        );
       }
     });
   }

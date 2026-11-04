@@ -26,6 +26,33 @@ class FeeddoApiException implements Exception {
       'FeeddoApiException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}${details != null ? ' - $details' : ''}';
 }
 
+/// Response for lightweight unread check
+class UnreadData {
+  final bool success;
+  final bool hasActiveConversation;
+  final int unreadMessageCount;
+  final Conversation? recentConversation;
+
+  UnreadData({
+    required this.success,
+    required this.hasActiveConversation,
+    required this.unreadMessageCount,
+    this.recentConversation,
+  });
+
+  factory UnreadData.fromJson(Map<String, dynamic> json) {
+    return UnreadData(
+      success: json['success'] as bool? ?? false,
+      hasActiveConversation: json['hasActiveConversation'] as bool? ?? false,
+      unreadMessageCount: json['unreadMessageCount'] as int? ?? 0,
+      recentConversation: json['recentConversation'] != null
+          ? Conversation.fromJson(
+              json['recentConversation'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+}
+
 /// Service for making API calls to Feeddo backend
 class ApiService {
   final String apiUrl;
@@ -109,6 +136,30 @@ class ApiService {
         'Network error: ${e.toString()}',
         details: e,
       );
+    }
+  }
+
+  /// Lightweight check for unread messages / active conversation
+  Future<UnreadData?> getUnreadData(String userId) async {
+    final url = Uri.parse('$apiUrl/end-users/unread?userId=$userId');
+
+    try {
+      final response = await _client.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        return UnreadData.fromJson(json);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Feeddo: Failed to get unread data: $e');
+      return null;
     }
   }
 

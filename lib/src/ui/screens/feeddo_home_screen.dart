@@ -349,7 +349,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                             ),
                             const SizedBox(height: 14),
                             _buildMenuCard(
-                              title: 'Request a feature',
+                              title: 'Community Board',
                               subtitle: 'Suggest features or report bugs',
                               icon: Icons.lightbulb_outline,
                               color: Colors.amber,
@@ -476,7 +476,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                             ),
                           ],
                           border: Border.all(
-                            color: widget.theme.colors.divider.withValues(alpha: 0.2),
+                            color: widget.theme.colors.divider
+                                .withValues(alpha: 0.2),
                             width: 1,
                           ),
                         ),
@@ -537,13 +538,15 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                         ),
                       ],
                       border: Border.all(
-                        color: widget.theme.colors.divider.withValues(alpha: 0.2),
+                        color:
+                            widget.theme.colors.divider.withValues(alpha: 0.2),
                         width: 1,
                       ),
                     ),
                     child: IconButton(
                       icon: Icon(Icons.close_rounded,
-                          color: widget.theme.colors.closeButtonColor, size: 22),
+                          color: widget.theme.colors.closeButtonColor,
+                          size: 22),
                       onPressed:
                           widget.onClose ?? () => Navigator.of(context).pop(),
                     ),
@@ -564,7 +567,6 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
       decoration: BoxDecoration(
         color: widget.theme.colors.primary,
         borderRadius: BorderRadius.circular(16),
-        
       ),
       child: Material(
         color: Colors.transparent,
@@ -581,8 +583,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                     color: onPrimaryColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.send_rounded,
-                      color: onPrimaryColor, size: 24),
+                  child:
+                      Icon(Icons.send_rounded, color: onPrimaryColor, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -718,7 +720,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: widget.theme.colors.textSecondary.withValues(alpha: 0.3),
+                  color:
+                      widget.theme.colors.textSecondary.withValues(alpha: 0.3),
                   size: 24,
                 ),
               ],
@@ -818,7 +821,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                                   child: Text(
                                     conversation.unreadMessages > 99
                                         ? '99+'
-                                        : conversation.unreadMessages.toString(),
+                                        : conversation.unreadMessages
+                                            .toString(),
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 11,
@@ -844,7 +848,8 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                     const SizedBox(width: 8),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: widget.theme.colors.textSecondary.withValues(alpha: 0.3),
+                      color: widget.theme.colors.textSecondary
+                          .withValues(alpha: 0.3),
                       size: 24,
                     ),
                   ],

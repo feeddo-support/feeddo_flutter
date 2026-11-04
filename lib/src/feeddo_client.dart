@@ -118,6 +118,37 @@ class FeeddoInternal {
   ///   userName: 'John Doe',
   /// );
   /// ```
+  static String _userId = '';
+  Future<String>? _initLock;
+
+  /// Ensure the user is initialized and synced with the backend database.
+  /// Called lazily when user opens any Feeddo UI screen.
+  Future<String> ensureUserInitialized() async {
+    if (_initLock != null) {
+      return await _initLock!;
+    }
+
+    _initLock = _performUserSync();
+    try {
+      final userId = await _initLock!;
+      return userId;
+    } finally {
+      _initLock = null;
+    }
+  }
+
+  Future<String> _performUserSync() async {
+    final isSynced = await StorageHelper.isSyncedWithBackend();
+    _cachedUserId ??= await StorageHelper.getUserId();
+
+    // If already synced and we have a valid cached userId, avoid extra network calls
+    if (isSynced && _cachedUserId != null && _cachedUserId!.isNotEmpty) {
+      return _cachedUserId!;
+    }
+
+    return await _upsertUser();
+  }
+
   static Future<InitResult> init({
     required String apiKey,
     required BuildContext context,
@@ -133,54 +164,105 @@ class FeeddoInternal {
     String? pushToken,
     FeeddoPushProvider? pushProvider,
   }) async {
-    // Create singleton instance if not exists
+    // 1. Record 1st app open timestamp locally (sets once, never overwritten)
+    await StorageHelper.recordFirstAppOpenAt();
+
+    // 2. Create singleton instance if not exists
     _instance ??= FeeddoInternal._(apiKey);
 
     // Store context and notification settings
     _instance!._notificationContext = context;
-    _instance!._isInAppNotificationOn =
-        isInAppNotificationOn;
+    _instance!._isInAppNotificationOn = isInAppNotificationOn;
     _instance!._notificationTheme = theme ?? FeeddoTheme.dark();
     if (notificationDuration != null) {
       _instance!._notificationDuration = notificationDuration;
     }
 
-    // Call instance method to upsert user
-    final userId = await _instance!._upsertUser(
+    // 3. Check if user identity or attributes changed
+    final existingExternalId = await StorageHelper.getExternalUserId();
+    final existingUserName = await StorageHelper.getUserName();
+    final existingEmail = await StorageHelper.getEmail();
+    final existingPushToken = await StorageHelper.getPendingPushToken();
+
+    final hasChanges =
+        (externalUserId != null && externalUserId != existingExternalId) ||
+        (userName != null && userName != existingUserName) ||
+        (email != null && email != existingEmail) ||
+        (pushToken != null && pushToken != existingPushToken);
+
+    if (hasChanges) {
+      await StorageHelper.setSyncedWithBackend(false);
+    }
+
+    // Save user data to local storage without pushing to DB
+    await StorageHelper.saveUserData(
       externalUserId: externalUserId,
       userName: userName,
       email: email,
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
-      pushToken: pushToken,
-      pushProvider: pushProvider,
     );
 
-    // Automatically show notification if there are unread messages
-    if (isInAppNotificationOn &&
-        _instance!._recentConversation != null) {
-      final recentConv = _instance!._recentConversation!;
-      if (recentConv.unreadMessages > 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          FeeddoNotificationManager.showNotification(
-            context,
-            recentConv,
-            theme: _instance!._notificationTheme,
-            duration: _instance!._notificationDuration,
-          );
-        });
-      }
+    // Save push token locally if provided
+    if (pushToken != null) {
+      await StorageHelper.savePendingPushToken(
+        pushToken: pushToken,
+        pushProvider: pushProvider?.value,
+      );
     }
+
+    // 4. Retrieve existing user ID or generate persistent local user ID
+    _userId = await StorageHelper.getOrCreateLocalUserId();
+    _instance!._cachedUserId = _userId;
 
     // Setup real-time notification listener if enabled
     if (isInAppNotificationOn) {
       _instance!._setupNotificationListener();
     }
 
+    // Only check for unread notifications if the user has an active conversation
+    Conversation? recentConv;
+    final hasActiveConv = await StorageHelper.hasActiveConversation();
+    if (hasActiveConv && isInAppNotificationOn) {
+      try {
+        final unreadData = await _instance!._apiService
+            .getUnreadData(_userId)
+            .timeout(const Duration(seconds: 3));
+
+        if (unreadData != null) {
+          // Update active conversation flag if resolved on backend
+          await StorageHelper.setHasActiveConversation(
+              unreadData.hasActiveConversation);
+
+          final conv = unreadData.recentConversation;
+          if (conv != null) {
+            recentConv = conv;
+            _instance!._recentConversation = conv;
+            _instance!._conversationService.updateConversation(conv);
+
+            if (conv.unreadMessages > 0) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  FeeddoNotificationManager.showNotification(
+                    context,
+                    conv,
+                    theme: _instance!._notificationTheme,
+                    duration: _instance!._notificationDuration,
+                  );
+                }
+              });
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Feeddo: Failed to check unread notifications: $e');
+      }
+    }
+
     return InitResult(
-      userId: userId,
-      recentConversation: _instance!._recentConversation,
+      userId: _userId,
+      recentConversation: recentConv,
     );
   }
 
@@ -206,9 +288,17 @@ class FeeddoInternal {
     subscriptionStatus ??= await StorageHelper.getSubscriptionStatus();
     customAttributes ??= await StorageHelper.getCustomAttributes();
 
-    // If push token is not provided, try to get it from storage
-    // Note: We don't have storage methods for push token yet, but we can add them later if needed.
-    // For now, we rely on the caller passing it.
+    // Load pending push token if not provided
+    if (pushToken == null) {
+      pushToken = await StorageHelper.getPendingPushToken();
+      final provStr = await StorageHelper.getPendingPushProvider();
+      if (provStr != null) {
+        pushProvider = FeeddoPushProvider.fromString(provStr);
+      }
+    }
+
+    // Load 1st app open timestamp
+    final firstSeenAt = await StorageHelper.getFirstAppOpenAt();
 
     // Collect device info
     String? platform;
@@ -241,6 +331,7 @@ class FeeddoInternal {
       customAttributes: customAttributes,
       pushToken: pushToken,
       pushProvider: pushProvider,
+      firstSeenAt: firstSeenAt,
     );
 
     try {
@@ -255,12 +346,15 @@ class FeeddoInternal {
           _recentConversation =
               Conversation.fromJson(response.recentConversation!);
           _conversationService.updateConversation(_recentConversation!);
+          if (_recentConversation!.status != 'resolved') {
+            await StorageHelper.setHasActiveConversation(true);
+          }
         } catch (e) {
           debugPrint('Feeddo: Failed to parse recent conversation: $e');
         }
       }
 
-      // Save to SharedPreferences
+      // Save to SharedPreferences and mark synced
       await StorageHelper.saveUserId(response.userId);
       await StorageHelper.saveUserData(
         externalUserId: externalUserId ?? response.externalUserId,
@@ -270,6 +364,7 @@ class FeeddoInternal {
         subscriptionStatus: subscriptionStatus,
         customAttributes: customAttributes,
       );
+      await StorageHelper.setSyncedWithBackend(true);
 
       debugPrint('Feeddo: User ${response.action} - ID: ${response.userId}');
       return response.userId;
@@ -298,16 +393,39 @@ class FeeddoInternal {
     String? pushToken,
     FeeddoPushProvider? pushProvider,
   }) async {
-    return await _upsertUser(
+    // 1. Save data locally
+    await StorageHelper.saveUserData(
       externalUserId: externalUserId,
       userName: userName,
       email: email,
       userSegment: userSegment,
       subscriptionStatus: subscriptionStatus,
       customAttributes: customAttributes,
-      pushToken: pushToken,
-      pushProvider: pushProvider,
     );
+    if (pushToken != null) {
+      await StorageHelper.savePendingPushToken(
+        pushToken: pushToken,
+        pushProvider: pushProvider?.value,
+      );
+    }
+
+    // 2. Only push to backend if user is already synced with backend
+    final isSynced = await StorageHelper.isSyncedWithBackend();
+    if (isSynced) {
+      return await _upsertUser(
+        externalUserId: externalUserId,
+        userName: userName,
+        email: email,
+        userSegment: userSegment,
+        subscriptionStatus: subscriptionStatus,
+        customAttributes: customAttributes,
+        pushToken: pushToken,
+        pushProvider: pushProvider,
+      );
+    } else {
+      _cachedUserId ??= await StorageHelper.getOrCreateLocalUserId();
+      return _cachedUserId!;
+    }
   }
 
   /// Register push token for the current user
@@ -315,30 +433,26 @@ class FeeddoInternal {
     required String pushToken,
     required FeeddoPushProvider pushProvider,
   }) async {
-    // If user is not initialized, we can't register token yet
-    // But we can store it for later initialization?
-    // For now, we assume init() has been called.
+    // 1. Save locally
+    await StorageHelper.savePendingPushToken(
+      pushToken: pushToken,
+      pushProvider: pushProvider.value,
+    );
 
-    if (_cachedUserId == null) {
-      // Try to get from storage
-      _cachedUserId = await StorageHelper.getUserId();
-      if (_cachedUserId == null) {
-        debugPrint('Feeddo: Cannot register push token. User not initialized.');
-        return;
+    // 2. Only push to backend if user is already synced with backend
+    final isSynced = await StorageHelper.isSyncedWithBackend();
+    if (isSynced) {
+      try {
+        await _upsertUser(
+          pushToken: pushToken,
+          pushProvider: pushProvider,
+        );
+        debugPrint('Feeddo: Push token registered successfully');
+      } catch (e) {
+        debugPrint('Feeddo: Failed to register push token: $e');
       }
-    }
-
-    try {
-      // We can use upsertUser to update just the push token
-      // Or we could add a specific endpoint in ApiService
-      // Since we updated upsertUser to handle push tokens, let's use that.
-      await _upsertUser(
-        pushToken: pushToken,
-        pushProvider: pushProvider,
-      );
-      debugPrint('Feeddo: Push token registered successfully');
-    } catch (e) {
-      debugPrint('Feeddo: Failed to register push token: $e');
+    } else {
+      debugPrint('Feeddo: Push token saved locally, will sync when UI opens');
     }
   }
 
@@ -363,12 +477,20 @@ class FeeddoInternal {
 
   /// Get home data for the current user
   Future<HomeData> getHomeData() async {
+    await ensureUserInitialized();
     if (userId == null) {
       throw FeeddoApiException('User not identified');
     }
     final homeData = await _apiService.getHomeData(userId!);
     // Update chatbot name from home data
     _chatBotName = homeData.chatbotName;
+    if (homeData.recentConversation != null &&
+        homeData.recentConversation!.status != 'resolved') {
+      await StorageHelper.setHasActiveConversation(true);
+    } else if (homeData.recentConversation == null ||
+        homeData.recentConversation!.status == 'resolved') {
+      await StorageHelper.setHasActiveConversation(false);
+    }
     return homeData;
   }
 
@@ -377,6 +499,7 @@ class FeeddoInternal {
     if (_instance == null) {
       throw FeeddoApiException('Feeddo not initialized');
     }
+    await _instance!.ensureUserInitialized();
     final targetUserId = userId ?? _instance!.userId;
     if (targetUserId == null) {
       throw FeeddoApiException('User not identified');
@@ -392,21 +515,26 @@ class FeeddoInternal {
     if (_instance == null) {
       throw FeeddoApiException('Feeddo not initialized');
     }
+    await _instance!.ensureUserInitialized();
     final userId = _instance!.userId;
     if (userId == null) {
       throw FeeddoApiException('User not identified');
     }
-    return await _instance!.conversationService
+    final conv = await _instance!.conversationService
         .createConversation(userId, agentName: agentName);
+    await StorageHelper.setHasActiveConversation(true);
+    return conv;
   }
 
   /// Get a ticket by ID
   Future<Ticket> getTicket(String ticketId) async {
+    await ensureUserInitialized();
     return await _apiService.getTicket(ticketId, userId: userId);
   }
 
   /// Get tickets for the current user
   Future<List<Ticket>> getTickets() async {
+    await ensureUserInitialized();
     if (userId == null) {
       throw FeeddoApiException('User not identified');
     }
@@ -416,12 +544,14 @@ class FeeddoInternal {
   /// Add a comment to a task
   Future<TaskComment> addTaskComment(String taskId, String content,
       {List<Map<String, dynamic>>? attachments}) async {
+    await ensureUserInitialized();
     return await _apiService.addTaskComment(taskId, content,
         userId: userId, attachments: attachments);
   }
 
   /// Vote on a task
   Future<Map<String, dynamic>> voteTask(String taskId, String voteType) async {
+    await ensureUserInitialized();
     return await _apiService.voteTask(taskId, voteType, userId: userId);
   }
 
@@ -433,6 +563,7 @@ class FeeddoInternal {
 
   /// Connect to WebSocket
   Future<void> connectWebSocket({String? conversationId}) async {
+    await ensureUserInitialized();
     if (userId == null) {
       debugPrint('Feeddo: Cannot connect to WebSocket, userId is null');
       return;
@@ -468,7 +599,8 @@ class FeeddoInternal {
     bool useSmallWindowOnDesktop = true,
     BoxConstraints? desktopConstraints,
   }) {
-    // Connect to WebSocket when opening the screen
+    // Ensure user initialized and connect to WebSocket when opening the screen
+    _instance?.ensureUserInitialized();
     _instance?.connectWebSocket();
 
     final effectiveTheme = theme ?? FeeddoTheme.dark();
@@ -634,6 +766,7 @@ class FeeddoInternal {
     BuildContext context, {
     FeeddoTheme? theme,
   }) {
+    _instance?.ensureUserInitialized();
     final effectiveTheme = theme ?? FeeddoTheme.dark();
 
     Navigator.of(context).push(

@@ -133,6 +133,8 @@ class Feeddo {
     Map<String, dynamic> data, {
     FeeddoTheme? theme,
   }) async {
+    await FeeddoInternal.instance.ensureUserInitialized();
+    if (!context.mounted) return;
     final type = data['type'];
     final effectiveTheme = theme ?? FeeddoTheme.dark();
 

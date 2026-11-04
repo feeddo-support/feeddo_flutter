@@ -102,6 +102,7 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
     }
 
     try {
+      await FeeddoInternal.instance.ensureUserInitialized();
       final newTasks = await FeeddoInternal.instance.apiService.getTasks(
         userId: FeeddoInternal.instance.userId,
         page: _page,
@@ -441,30 +442,43 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
     );
   }
   
+  final Set<String> _votingTaskIds = {};
+
   Future<void> _handleVote(Task task, String voteType) async {
-    // 1. Calculate optimistic state
+    if (_votingTaskIds.contains(task.id)) return;
+    _votingTaskIds.add(task.id);
+
+    // 1. Calculate optimistic state for net score (upvotes - downvotes)
     final oldUpvoteCount = task.upvoteCount;
     final oldMyVote = task.myVote;
     
     int newUpvoteCount = oldUpvoteCount;
     String? newMyVote;
     
-    // Only handling 'up' and 'remove' based on TaskCard logic for now
+    // Handling 'up' and 'remove' based on TaskCard logic
     if (voteType == 'remove') {
-       if (oldMyVote == 'up') newUpvoteCount--;
-       newMyVote = null;
+      if (oldMyVote == 'up') {
+        newUpvoteCount -= 1;
+      } else if (oldMyVote == 'down') {
+        newUpvoteCount += 1;
+      }
+      newMyVote = null;
     } else if (voteType == 'up') {
-       if (oldMyVote != 'up') newUpvoteCount++;
-       newMyVote = 'up';
+      if (oldMyVote == 'down') {
+        newUpvoteCount += 2;
+      } else if (oldMyVote != 'up') {
+        newUpvoteCount += 1;
+      }
+      newMyVote = 'up';
     }
 
     final updatedTask = task.copyWith(
-       upvoteCount: newUpvoteCount,
-       myVote: newMyVote,
-       clearMyVote: newMyVote == null,
+      upvoteCount: newUpvoteCount,
+      myVote: newMyVote,
+      clearMyVote: newMyVote == null,
     );
     
-    // 2. Update UI
+    // 2. Update UI optimistically
     setState(() {
       final index = _tasks.indexWhere((t) => t.id == task.id);
       if (index != -1) {
@@ -473,26 +487,40 @@ class _FeeddoTasksScreenState extends State<FeeddoTasksScreen> with SingleTicker
     });
 
     try {
-       // 3. Call API
-       String apiVoteType = voteType == 'remove' ? 'none' : voteType;
-       await FeeddoInternal.instance.voteTask(task.id, apiVoteType); 
+      // 3. Call API
+      final apiVoteType = voteType == 'remove' ? 'none' : voteType;
+      final result =
+          await FeeddoInternal.instance.voteTask(task.id, apiVoteType);
+
+      // 4. Update with actual server count
+      final serverUpvoteCount = result['upvoteCount'] as int?;
+      if (serverUpvoteCount != null && mounted) {
+        setState(() {
+          final index = _tasks.indexWhere((t) => t.id == task.id);
+          if (index != -1) {
+            _tasks[index] = _tasks[index].copyWith(
+              upvoteCount: serverUpvoteCount,
+              myVote: newMyVote,
+              clearMyVote: newMyVote == null,
+            );
+          }
+        });
+      }
     } catch (e) {
-       // Revert on error
-       if (mounted) {
-          setState(() {
-             final index = _tasks.indexWhere((t) => t.id == task.id);
-             if (index != -1) {
-                  // Revert to old values
-                   // Actually we need to reconstruct perfectly. 
-                   // A simpler way is just to not update UI until API returns, but that feels slow.
-                   // Or just reload.
-                   _tasks[index] = task; // 'task' is the original object
-             }
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-             SnackBar(content: Text('Failed to vote: $e')),
-          );
-       }
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          final index = _tasks.indexWhere((t) => t.id == task.id);
+          if (index != -1) {
+            _tasks[index] = task;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to vote: $e')),
+        );
+      }
+    } finally {
+      _votingTaskIds.remove(task.id);
     }
   }
 

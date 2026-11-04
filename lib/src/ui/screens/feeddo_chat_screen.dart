@@ -8,6 +8,7 @@ import '../../models/message.dart';
 import '../../models/task.dart';
 import '../../models/ticket.dart';
 import '../../theme/feeddo_theme.dart';
+import '../../utils/storage_helper.dart';
 import '../widgets/task_details_sheet.dart';
 import '../widgets/chat_input_area.dart';
 import '../widgets/task_card.dart';
@@ -100,6 +101,9 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
   void _onConversationUpdated() {
     if (mounted) {
       setState(() {});
+      if (_conversation != null && _conversation!.status == 'resolved') {
+        StorageHelper.setHasActiveConversation(false);
+      }
     }
   }
 
@@ -620,6 +624,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
 
     wsService.send(messageData);
+    StorageHelper.setHasActiveConversation(true);
   }
 
   Widget _buildInputArea(FeeddoTheme theme) {
@@ -799,6 +804,7 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
     }
 
     wsService.send(messageData);
+    StorageHelper.setHasActiveConversation(true);
 
     setState(() {
       _isSending = false;

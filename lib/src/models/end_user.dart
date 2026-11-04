@@ -47,6 +47,9 @@ class EndUser {
   /// Push notification provider (fcm, apns, onesignal)
   final FeeddoPushProvider? pushProvider;
 
+  /// Timestamp when user opened the app for the 1st time
+  final int? firstSeenAt;
+
   const EndUser({
     this.userId,
     this.externalUserId,
@@ -63,6 +66,7 @@ class EndUser {
     this.customAttributes,
     this.pushToken,
     this.pushProvider,
+    this.firstSeenAt,
   });
 
   /// Convert EndUser to JSON for API requests
@@ -86,6 +90,7 @@ class EndUser {
     if (customAttributes != null) json['customAttributes'] = customAttributes;
     if (pushToken != null) json['pushToken'] = pushToken;
     if (pushProvider != null) json['pushProvider'] = pushProvider!.value;
+    if (firstSeenAt != null) json['firstSeenAt'] = firstSeenAt;
 
     return json;
   }
@@ -109,6 +114,7 @@ class EndUser {
       pushToken: json['pushToken'] as String?,
       pushProvider:
           FeeddoPushProvider.fromString(json['pushProvider'] as String?),
+      firstSeenAt: json['firstSeenAt'] as int?,
     );
   }
 
@@ -129,6 +135,7 @@ class EndUser {
     Map<String, dynamic>? customAttributes,
     String? pushToken,
     FeeddoPushProvider? pushProvider,
+    int? firstSeenAt,
   }) {
     return EndUser(
       userId: userId ?? this.userId,
@@ -146,6 +153,7 @@ class EndUser {
       customAttributes: customAttributes ?? this.customAttributes,
       pushToken: pushToken ?? this.pushToken,
       pushProvider: pushProvider ?? this.pushProvider,
+      firstSeenAt: firstSeenAt ?? this.firstSeenAt,
     );
   }
 

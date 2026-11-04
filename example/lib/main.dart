@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-const String _apiKey = 'YOUR_FEEDDO_API_KEY_HERE';
+const String _apiKey = 'fdo_c2b44f24db8b4cb4a681b80483b81afc';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -86,9 +86,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     });
 
     try {
-      final userId = await Feeddo.init(
-        apiKey: _apiKey,
-        context: context);
+      final userId = await Feeddo.init(apiKey: _apiKey, context: context);
 
       Feeddo.registerPushToken(
         pushToken: token!,
