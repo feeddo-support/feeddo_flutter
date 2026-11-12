@@ -138,7 +138,10 @@ class Feeddo {
     final type = data['type'];
     final effectiveTheme = theme ?? FeeddoTheme.dark();
 
-    if (type == 'task_released' || type == 'task_comment') {
+    if (type == 'task_released' ||
+        type == 'task_status_changed' ||
+        type == 'task_comment' ||
+        type == 'task_created') {
       final taskId = data['taskId'];
       if (taskId != null) {
         TaskDetailsSheet.show(

@@ -65,7 +65,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
   /// Initialize Feeddo SDK
   Future<void> _initFeeddo() async {
     final messaging = FirebaseMessaging.instance;
-    final settings = await messaging.requestPermission(
+    await messaging.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -80,6 +80,8 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       print('Registration Token=$token');
     }
 
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
       _status = 'Initializing Feeddo...';
@@ -88,13 +90,17 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
     try {
       final userId = await Feeddo.init(apiKey: _apiKey, context: context);
 
-      Feeddo.registerPushToken(
-        pushToken: token!,
-        pushProvider: FeeddoPushProvider.fcm,
-      );
+      if (token != null) {
+        await Feeddo.registerPushToken(
+          pushToken: token,
+          pushProvider: FeeddoPushProvider.fcm,
+        );
+      }
 
       int count = Feeddo.unreadMessageCount;
       debugPrint('Initial unread message count: $count');
+
+      if (!mounted) return;
 
       setState(() {
         _status = 'Feeddo initialized!\nUser ID: $userId';
@@ -102,10 +108,12 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        if (!mounted) return;
         Feeddo.handleNotificationTap(context, message.data);
       });
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (!mounted) return;
         Feeddo.showInappNotification(
           context: context,
           title: message.notification?.title ?? 'New Message',
@@ -114,6 +122,7 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
         );
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _status = 'Initialization failed: $e';
         _isLoading = false;

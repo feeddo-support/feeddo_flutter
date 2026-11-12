@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:feeddo_flutter/feeddo_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,9 +17,9 @@ import 'feeddo_chat_screen.dart';
 class FeeddoHomeScreen extends StatefulWidget {
   final FeeddoTheme theme;
   final VoidCallback? onClose;
-  final VoidCallback? onMessagesTap;
-  final VoidCallback? onTicketsTap;
-  final VoidCallback? onFeatureRequestTap;
+  final FutureOr<void> Function()? onMessagesTap;
+  final FutureOr<void> Function()? onTicketsTap;
+  final FutureOr<void> Function()? onFeatureRequestTap;
   final VoidCallback? onSendMessageTap;
 
   const FeeddoHomeScreen({
@@ -37,6 +38,7 @@ class FeeddoHomeScreen extends StatefulWidget {
 
 class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
   HomeData? _homeData;
+  StreamSubscription<Map<String, dynamic>>? _notificationSubscription;
 
   @override
   void initState() {
@@ -45,10 +47,15 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
     _loadHomeData();
     FeeddoInternal.instance.conversationService
         .addListener(_onConversationUpdated);
+    _notificationSubscription =
+        FeeddoInternal.instance.notifications.listen((_) {
+      _loadHomeData();
+    });
   }
 
   @override
   void dispose() {
+    _notificationSubscription?.cancel();
     FeeddoInternal.instance.conversationService
         .removeListener(_onConversationUpdated);
     super.dispose();
@@ -87,6 +94,9 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
         ),
       ),
     );
+    if (mounted) {
+      _loadHomeData();
+    }
   }
 
   Future<void> _loadHomeData() async {
@@ -217,23 +227,18 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the conversation to display: prefer from conversation service if available, otherwise use home data
-    Conversation? displayConversation;
+    // Get the conversation to display:
+    // 1. First look for the most recent active conversation in conversation service
+    final activeServiceConv = FeeddoInternal
+        .instance.conversationService.conversations
+        .where((c) => c.status != 'resolved')
+        .firstOrNull;
 
-    if (_homeData?.recentConversation != null) {
-      final homeConvId = _homeData!.recentConversation!.id;
-      // Check if this conversation exists in conversation service (with updates)
-      final updatedConv = FeeddoInternal
-          .instance.conversationService.conversations
-          .where((c) => c.id == homeConvId)
-          .firstOrNull;
-
-      // Use updated version from service if available, otherwise use from home data
-      displayConversation = updatedConv ?? _homeData!.recentConversation;
-
-      // Only show if not resolved
-      if (displayConversation?.status == 'resolved') {
-        displayConversation = null;
+    // 2. Fall back to _homeData?.recentConversation if not resolved
+    Conversation? displayConversation = activeServiceConv;
+    if (displayConversation == null && _homeData?.recentConversation != null) {
+      if (_homeData!.recentConversation!.status != 'resolved') {
+        displayConversation = _homeData!.recentConversation;
       }
     }
 
@@ -343,7 +348,14 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                               subtitle: 'View your conversations',
                               icon: Icons.chat_bubble_outline,
                               color: Colors.blue,
-                              onTap: widget.onMessagesTap,
+                              onTap: () async {
+                                if (widget.onMessagesTap != null) {
+                                  await widget.onMessagesTap!();
+                                  if (mounted) {
+                                    _loadHomeData();
+                                  }
+                                }
+                              },
                               badgeCount: FeeddoInternal.instance
                                   .conversationService.unreadMessageCount,
                             ),
@@ -353,7 +365,14 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                               subtitle: 'Suggest features or report bugs',
                               icon: Icons.lightbulb_outline,
                               color: Colors.amber,
-                              onTap: widget.onFeatureRequestTap,
+                              onTap: () async {
+                                if (widget.onFeatureRequestTap != null) {
+                                  await widget.onFeatureRequestTap!();
+                                  if (mounted) {
+                                    _loadHomeData();
+                                  }
+                                }
+                              },
                             ),
                             const SizedBox(height: 14),
                             _buildMenuCard(
@@ -361,7 +380,14 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                               subtitle: 'Track your support tickets',
                               icon: Icons.confirmation_number_outlined,
                               color: Colors.purple,
-                              onTap: widget.onTicketsTap,
+                              onTap: () async {
+                                if (widget.onTicketsTap != null) {
+                                  await widget.onTicketsTap!();
+                                  if (mounted) {
+                                    _loadHomeData();
+                                  }
+                                }
+                              },
                             ),
 
                             // Recent Activity Section
@@ -766,7 +792,9 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
                 ),
               ),
             );
-            _loadHomeData();
+            if (mounted) {
+              _loadHomeData();
+            }
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(

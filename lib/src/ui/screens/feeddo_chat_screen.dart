@@ -88,6 +88,10 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
   @override
   void dispose() {
+    if (_conversation != null) {
+      FeeddoInternal.instance.conversationService
+          .updateConversation(_conversation!);
+    }
     FeeddoInternal.instance.conversationService.setActiveConversationId(null);
     FeeddoInternal.instance.conversationService
         .removeListener(_onConversationUpdated);
@@ -165,6 +169,20 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
         _isTyping = false;
         _systemStatus = null;
       });
+
+      // Update conversation with latest message preview and sync with ConversationService
+      if (_conversation != null) {
+        final parsed = _parseMessageContent(message.content ?? '');
+        _conversation = _conversation!.copyWith(
+          lastMessagePreview:
+              parsed.content.isNotEmpty ? parsed.content : message.content,
+          lastMessageAt: message.createdAt,
+          displayName: message.displayName ?? _conversation!.displayName,
+        );
+        FeeddoInternal.instance.conversationService
+            .updateConversation(_conversation!);
+      }
+
       _sendReadReceipt();
     } else if (data['type'] == 'typing') {
       setState(() {
@@ -433,7 +451,9 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      displayTitle.substring(0, 1).toUpperCase(),
+                      displayTitle.trim().isNotEmpty
+                          ? displayTitle.trim()[0].toUpperCase()
+                          : 'F',
                       style: TextStyle(
                         color: theme.isDark ? Colors.black : Colors.white,
                         fontSize: 16,
@@ -621,6 +641,12 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     if (_conversation != null) {
       messageData['conversationId'] = _conversation!.id;
+      _conversation = _conversation!.copyWith(
+        lastMessagePreview: 'Sent an attachment',
+        lastMessageAt: tempMessage.createdAt,
+      );
+      FeeddoInternal.instance.conversationService
+          .updateConversation(_conversation!);
     }
 
     wsService.send(messageData);
@@ -730,28 +756,27 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
   }
 
   Future<void> _fetchConversation(String conversationId) async {
-    // Try to find in service first
     try {
-      // Wait a bit for the service to potentially update via websocket
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Reload conversations to be sure
-      if (FeeddoInternal.instance.userId != null) {
-        await FeeddoInternal.instance.conversationService
-            .loadConversations(FeeddoInternal.instance.userId!);
+      Conversation? conv;
+      final cached = FeeddoInternal.instance.conversationService.conversations;
+      for (final c in cached) {
+        if (c.id == conversationId) {
+          conv = c;
+          break;
+        }
       }
 
-      final conv = FeeddoInternal.instance.conversationService.conversations
-          .firstWhere((c) => c.id == conversationId);
+      conv ??= await FeeddoInternal.instance.apiService
+          .getConversation(conversationId);
 
       if (mounted) {
         setState(() {
           _conversation = conv;
           _isInitializingConversation = false;
         });
+        FeeddoInternal.instance.conversationService.updateConversation(conv);
         FeeddoInternal.instance.conversationService
             .setActiveConversationId(conversationId);
-        _loadMessages();
       }
     } catch (e) {
       debugPrint('ChatScreen: Failed to fetch new conversation: $e');
@@ -801,6 +826,12 @@ class _FeeddoChatScreenState extends State<FeeddoChatScreen> {
 
     if (_conversation != null) {
       messageData['conversationId'] = _conversation!.id;
+      _conversation = _conversation!.copyWith(
+        lastMessagePreview: text,
+        lastMessageAt: tempMessage.createdAt,
+      );
+      FeeddoInternal.instance.conversationService
+          .updateConversation(_conversation!);
     }
 
     wsService.send(messageData);

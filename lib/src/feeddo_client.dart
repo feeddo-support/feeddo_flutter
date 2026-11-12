@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'config/feeddo_config.dart';
+import 'feeddo.dart';
 import 'services/api_service.dart';
 import 'services/websocket_service.dart';
 import 'services/conversation_service.dart';
 import 'models/home_data.dart';
 import 'models/end_user.dart';
 import 'models/conversation.dart';
-import 'models/push_provider.dart';
 
 import 'models/ticket.dart';
 import 'models/task_comment.dart';
@@ -48,6 +49,13 @@ class FeeddoInternal {
   bool _isInAppNotificationOn = false;
   FeeddoTheme? _notificationTheme;
   Duration _notificationDuration = const Duration(seconds: 10);
+  StreamSubscription<Map<String, dynamic>>? _wsNotificationSubscription;
+  final _notificationController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  /// Broadcast stream of incoming WebSocket notification payloads.
+  Stream<Map<String, dynamic>> get notifications =>
+      _notificationController.stream;
 
   // Private constructor
   FeeddoInternal._(String apiKey)
@@ -60,6 +68,8 @@ class FeeddoInternal {
       apiKey: _apiService.apiKey,
     );
     _conversationService = ConversationService(_apiService, _webSocketService);
+    _wsNotificationSubscription =
+        _webSocketService.messages.listen(_handleWebSocketNotification);
   }
 
   /// Get the singleton instance
@@ -475,6 +485,31 @@ class FeeddoInternal {
     };
   }
 
+  void _handleWebSocketNotification(Map<String, dynamic> data) {
+    if (data['type'] != 'notification') return;
+
+    _notificationController.add(data);
+
+    if (!_isInAppNotificationOn) return;
+    final ctx = _notificationContext;
+    if (ctx == null || !ctx.mounted) return;
+
+    final title = data['title'] as String? ?? 'Notification';
+    final body = data['body'] as String? ?? '';
+    final rawData = data['data'];
+    final payloadData =
+        rawData is Map ? Map<String, dynamic>.from(rawData) : null;
+
+    Feeddo.showInappNotification(
+      context: ctx,
+      title: title,
+      message: body,
+      data: payloadData,
+      theme: _notificationTheme,
+      duration: _notificationDuration,
+    );
+  }
+
   /// Get home data for the current user
   Future<HomeData> getHomeData() async {
     await ensureUserInitialized();
@@ -585,6 +620,8 @@ class FeeddoInternal {
   static void dispose() {
     if (_instance != null) {
       _instance!.conversationService.onNewMessage = null;
+      _instance!._wsNotificationSubscription?.cancel();
+      _instance!._notificationController.close();
       _instance!.disconnectWebSocket();
       _instance!._webSocketService.dispose();
       FeeddoNotificationManager.clearAll();
@@ -664,24 +701,24 @@ class FeeddoInternal {
                             onClose: () {
                               Navigator.of(dialogContext).pop();
                             },
-                            onMessagesTap: () {
-                              nestedNavigatorKey.currentState?.push(
+                            onMessagesTap: () async {
+                              await nestedNavigatorKey.currentState?.push(
                                 MaterialPageRoute(
                                   builder: (context) => FeeddoMessagesScreen(
                                       theme: effectiveTheme),
                                 ),
                               );
                             },
-                            onTicketsTap: () {
-                              nestedNavigatorKey.currentState?.push(
+                            onTicketsTap: () async {
+                              await nestedNavigatorKey.currentState?.push(
                                 MaterialPageRoute(
                                   builder: (context) => FeeddoTicketsScreen(
                                       theme: effectiveTheme),
                                 ),
                               );
                             },
-                            onFeatureRequestTap: () {
-                              nestedNavigatorKey.currentState?.push(
+                            onFeatureRequestTap: () async {
+                              await nestedNavigatorKey.currentState?.push(
                                 MaterialPageRoute(
                                   builder: (context) =>
                                       FeeddoTasksScreen(theme: effectiveTheme),
@@ -717,24 +754,24 @@ class FeeddoInternal {
               onClose: () {
                 Navigator.of(context).pop();
               },
-              onMessagesTap: () {
-                Navigator.of(context).push(
+              onMessagesTap: () async {
+                await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
                         FeeddoMessagesScreen(theme: effectiveTheme),
                   ),
                 );
               },
-              onTicketsTap: () {
-                Navigator.of(context).push(
+              onTicketsTap: () async {
+                await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
                         FeeddoTicketsScreen(theme: effectiveTheme),
                   ),
                 );
               },
-              onFeatureRequestTap: () {
-                Navigator.of(context).push(
+              onFeatureRequestTap: () async {
+                await Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) =>
                         FeeddoTasksScreen(theme: effectiveTheme),

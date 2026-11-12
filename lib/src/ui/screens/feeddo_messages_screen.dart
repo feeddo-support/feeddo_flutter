@@ -80,6 +80,9 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
         ),
       ),
     );
+    if (mounted) {
+      _loadConversations();
+    }
   }
 
   Widget _buildRichText(String text, TextStyle baseStyle) {
@@ -192,6 +195,9 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
             ),
           ),
         );
+        if (mounted) {
+          _loadConversations();
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -202,9 +208,17 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
               radius: 20,
               backgroundColor: _theme.colors.primary.withValues(alpha: 0.1),
               child: Text(
-                (conversation.displayName ?? conversation.title ?? '?')
-                    .substring(0, 1)
-                    .toUpperCase(),
+                (() {
+                  final name = conversation.displayName?.trim();
+                  if (name != null && name.isNotEmpty) {
+                    return name[0].toUpperCase();
+                  }
+                  final title = conversation.title?.trim();
+                  if (title != null && title.isNotEmpty) {
+                    return title[0].toUpperCase();
+                  }
+                  return '?';
+                })(),
                 style: TextStyle(
                   color: _theme.colors.primary,
                   fontWeight: FontWeight.bold,

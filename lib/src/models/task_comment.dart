@@ -19,9 +19,10 @@ class TaskComment {
 
   factory TaskComment.fromJson(Map<String, dynamic> json) {
     List<Map<String, dynamic>>? attachmentsList;
-    if (json['attachments'] != null) {
+    if (json['attachments'] != null && json['attachments'] is List) {
       attachmentsList = (json['attachments'] as List)
-          .map((e) => e as Map<String, dynamic>)
+          .map((e) =>
+              e is Map ? Map<String, dynamic>.from(e) : <String, dynamic>{})
           .toList();
     }
 
@@ -31,8 +32,9 @@ class TaskComment {
       userType: json['userType'] ?? json['user_type'] ?? 'end_user',
       authorName: json['authorName'] ?? json['author_name'],
       createdAt: json['createdAt'] ?? json['created_at'] ?? 0,
-      hasAttachments:
-          json['hasAttachments'] ?? json['has_attachments'] ?? false,
+      hasAttachments: json['hasAttachments'] == true ||
+          json['has_attachments'] == 1 ||
+          json['has_attachments'] == true,
       attachments: attachmentsList,
     );
   }

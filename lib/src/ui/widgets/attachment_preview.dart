@@ -56,17 +56,26 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
           ? widget.url 
           : '${FeeddoInternal.instance.apiService.apiUrl.replaceAll('/api', '')}${widget.url}';
 
-      _videoController = VideoPlayerController.networkUrl(
+      final controller = VideoPlayerController.networkUrl(
         Uri.parse(videoUrl),
         httpHeaders: {'x-api-key': FeeddoInternal.instance.apiService.apiKey},
       );
-      await _videoController!.initialize();
+      _videoController = controller;
+      await controller.initialize();
 
-      _chewieController = ChewieController(
-        videoPlayerController: _videoController!,
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+
+      final rawRatio = controller.value.aspectRatio;
+      final validRatio = (rawRatio > 0 && rawRatio.isFinite) ? rawRatio : (16 / 9);
+
+      final chewie = ChewieController(
+        videoPlayerController: controller,
         autoPlay: false,
         looping: false,
-        aspectRatio: _videoController!.value.aspectRatio,
+        aspectRatio: validRatio,
         placeholder: Container(
           color: Colors.black,
           child: const Center(
@@ -83,11 +92,16 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
         },
       );
 
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
+      if (!mounted) {
+        chewie.dispose();
+        controller.dispose();
+        return;
       }
+
+      _chewieController = chewie;
+      setState(() {
+        _isInitialized = true;
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -99,8 +113,8 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
 
   @override
   void dispose() {
-    _videoController?.dispose();
     _chewieController?.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -142,9 +156,13 @@ class _AttachmentPreviewState extends State<AttachmentPreview> {
           ),
         );
       }
+      final rawRatio = _videoController!.value.aspectRatio;
+      final validRatio =
+          (rawRatio > 0 && rawRatio.isFinite) ? rawRatio : (16 / 9);
+
       return Container(
         width: 200,
-        height: 200 / _videoController!.value.aspectRatio,
+        height: 200 / validRatio,
         constraints: const BoxConstraints(maxHeight: 300),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.10] - 2026-11-12
+### Added
+- Real-time WebSocket notification listener in `FeeddoInternal` (`notifications` broadcast stream and in-app banner display) and live unread notification badge refresh on `FeeddoHomeScreen`.
+- Support for `task_status_changed` and `task_created` notification tap navigation in `Feeddo.handleNotificationTap`.
+
+### Fixed
+- Improved conversation list preview/unread synchronization across home, messages, and chat screens.
+- Fixed `TaskComment` parsing for SQL `has_attachments` integer values and non-list/map edge cases, plus attachment preview and mounted checks in sheet/example widgets.
+
 ## [0.1.9] - 2026-11-04
 ### Updated
 - Updated base API URL to production `https://api.feeddo.dev/api`.

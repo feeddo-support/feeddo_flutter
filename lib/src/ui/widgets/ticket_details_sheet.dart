@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../feeddo_client.dart';
 import '../../models/ticket.dart';
+import '../../models/conversation.dart';
 import '../../theme/feeddo_theme.dart';
 import '../screens/feeddo_chat_screen.dart';
 
@@ -269,13 +270,20 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
 
   Future<void> _openConversation(String conversationId) async {
     try {
-      // Fetch the conversation
+      // First try to find in conversation service cache
       final conversations =
           FeeddoInternal.instance.conversationService.conversations;
-      final conversation = conversations.firstWhere(
-        (c) => c.id == conversationId,
-        orElse: () => throw Exception('Conversation not found'),
-      );
+      Conversation? conversation;
+      for (final c in conversations) {
+        if (c.id == conversationId) {
+          conversation = c;
+          break;
+        }
+      }
+
+      // If not in cache, fetch directly from API
+      conversation ??= await FeeddoInternal.instance.apiService
+          .getConversation(conversationId);
 
       if (!mounted) return;
 
