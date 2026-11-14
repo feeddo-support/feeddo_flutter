@@ -127,6 +127,50 @@ class Feeddo {
     );
   }
 
+  /// Handle a foreground push notification to display an in-app banner and update the unread badge,
+  /// suppressing the native system notification.
+  static void handleForegroundNotification(
+    Map<String, dynamic> data, {
+    BuildContext? context,
+    String? title,
+    String? message,
+    FeeddoTheme? theme,
+  }) {
+    try {
+      final conversationId = data['conversationId'] as String?;
+      if (conversationId != null) {
+        FeeddoInternal.instance.conversationService
+            .incrementUnreadCount(conversationId);
+      } else if (data['badge'] != null) {
+        final badge = int.tryParse(data['badge'].toString());
+        if (badge != null) {
+          FeeddoInternal.instance.conversationService.setTotalUnreadCount(badge);
+        }
+      }
+
+      final ctx = context ?? FeeddoInternal.instance.notificationContext;
+      if (ctx != null &&
+          ctx.mounted &&
+          FeeddoInternal.instance.isInAppNotificationOn) {
+        final notifTitle = title ??
+            (data['title'] as String?) ??
+            FeeddoInternal.instance.chatBotName;
+        final notifBody = message ?? (data['body'] as String?) ?? '';
+
+        showInappNotification(
+          context: ctx,
+          title: notifTitle,
+          message: notifBody,
+          data: data,
+          theme: theme ?? FeeddoInternal.instance.notificationTheme,
+          duration: FeeddoInternal.instance.notificationDuration,
+        );
+      }
+    } catch (e) {
+      debugPrint('Feeddo: Error handling foreground notification: $e');
+    }
+  }
+
   /// Handle notification tap action based on payload data
   static Future<void> handleNotificationTap(
     BuildContext context,
@@ -173,7 +217,9 @@ class Feeddo {
                   theme: effectiveTheme,
                 ),
               ),
-            );
+            ).then((_) {
+              FeeddoInternal.instance.disconnectWebSocket();
+            });
           }
         } catch (e) {
           debugPrint('Feeddo: Failed to load conversation: $e');

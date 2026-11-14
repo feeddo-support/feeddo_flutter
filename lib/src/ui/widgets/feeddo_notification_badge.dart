@@ -88,7 +88,9 @@ class _FeeddoNotificationBadgeState extends State<FeeddoNotificationBadge>
             theme: widget.theme ?? FeeddoTheme.dark(),
           ),
         ),
-      );
+      ).then((_) {
+        FeeddoInternal.instance.disconnectWebSocket();
+      });
     }
     _dismiss();
   }

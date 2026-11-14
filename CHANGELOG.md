@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.11] - 2026-11-14
+### Added
+- Added `Feeddo.handleForegroundNotification` to display the in-app banner and update unread badge counts for push notifications received while the app is in the foreground.
+
+### Fixed
+- Automatically disconnect WebSocket connection when Feeddo support screen or dialog is closed, relying on push notifications when the UI is closed.
+
 ## [0.1.10] - 2026-11-12
 ### Added
 - Real-time WebSocket notification listener in `FeeddoInternal` (`notifications` broadcast stream and in-app banner display) and live unread notification badge refresh on `FeeddoHomeScreen`.

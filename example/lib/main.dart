@@ -107,6 +107,12 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
         _isLoading = false;
       });
 
+      await messaging.setForegroundNotificationPresentationOptions(
+        alert: false,
+        badge: true,
+        sound: false,
+      );
+
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         if (!mounted) return;
         Feeddo.handleNotificationTap(context, message.data);
@@ -114,11 +120,11 @@ class _FeeddoDemoState extends State<FeeddoDemo> {
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         if (!mounted) return;
-        Feeddo.showInappNotification(
+        Feeddo.handleForegroundNotification(
+          message.data,
           context: context,
-          title: message.notification?.title ?? 'New Message',
-          message: message.notification?.body ?? '',
-          data: message.data,
+          title: message.notification?.title,
+          message: message.notification?.body,
         );
       });
     } catch (e) {

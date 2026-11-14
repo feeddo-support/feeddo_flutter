@@ -92,6 +92,18 @@ class FeeddoInternal {
   /// Get the recent conversation with unread messages (if any)
   Conversation? get recentConversation => instance._recentConversation;
 
+  /// Get the current notification BuildContext
+  BuildContext? get notificationContext => _notificationContext;
+
+  /// Whether in-app notifications are enabled
+  bool get isInAppNotificationOn => _isInAppNotificationOn;
+
+  /// Get the notification theme
+  FeeddoTheme get notificationTheme => _notificationTheme ?? FeeddoTheme.dark();
+
+  /// Get the notification display duration
+  Duration get notificationDuration => _notificationDuration;
+
   /// Initialize Feeddo SDK and create/update user
   ///
   /// Call this method at app startup or when user data changes.
@@ -741,8 +753,8 @@ class FeeddoInternal {
           ),
         ),
       ).then((_) {
-        // Reconnect with no conversation ID to ensure we receive all notifications
-        _instance?.connectWebSocket(conversationId: null);
+        // Disconnect WebSocket when the screen is popped
+        _instance?.disconnectWebSocket();
       });
     } else {
       Navigator.of(context)
@@ -789,11 +801,8 @@ class FeeddoInternal {
         ),
       )
           .then((_) {
-        // Do not disconnect when the screen is popped to keep receiving notifications
-        // _instance?.disconnectWebSocket();
-
-        // Reconnect with no conversation ID to ensure we receive all notifications
-        _instance?.connectWebSocket(conversationId: null);
+        // Disconnect WebSocket when the screen is popped
+        _instance?.disconnectWebSocket();
       });
     }
   }

@@ -295,6 +295,9 @@ class _TicketDetailsSheetState extends State<TicketDetailsSheet> {
           ),
         ),
       );
+      if (mounted) {
+        FeeddoInternal.instance.connectWebSocket();
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

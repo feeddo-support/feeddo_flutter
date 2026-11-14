@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:feeddo_flutter/src/models/task_comment.dart';
 import 'package:feeddo_flutter/src/models/message.dart';
 import 'package:feeddo_flutter/src/models/conversation.dart';
+import 'package:feeddo_flutter/src/services/api_service.dart';
+import 'package:feeddo_flutter/src/services/websocket_service.dart';
+import 'package:feeddo_flutter/src/services/conversation_service.dart';
 
 void main() {
   group('Model parsing tests', () {
@@ -56,6 +59,30 @@ void main() {
 
       expect(conversation.id, 'conv1');
       expect(conversation.autoReply, isTrue);
+    });
+
+    test('ConversationService unread count updates properly', () {
+      final service = ConversationService(
+        ApiService(apiUrl: 'https://example.com', apiKey: 'key'),
+        WebSocketService(baseUrl: 'https://example.com', apiKey: 'key'),
+      );
+
+      expect(service.unreadMessageCount, 0);
+
+      service.incrementUnreadCount('conv1');
+      expect(service.unreadMessageCount, 1);
+
+      service.incrementUnreadCount('conv1');
+      expect(service.unreadMessageCount, 2);
+
+      service.incrementUnreadCount('conv2');
+      expect(service.unreadMessageCount, 3);
+
+      service.setTotalUnreadCount(10);
+      expect(service.unreadMessageCount, 10);
+
+      service.markAsRead('conv1');
+      expect(service.unreadMessageCount, 1);
     });
   });
 }

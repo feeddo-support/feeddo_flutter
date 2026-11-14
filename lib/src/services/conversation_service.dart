@@ -238,4 +238,28 @@ class ConversationService extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  /// Increment unread count for a conversation when a background or foreground notification arrives
+  void incrementUnreadCount(String conversationId) {
+    _unreadCounts[conversationId] = (_unreadCounts[conversationId] ?? 0) + 1;
+    final index = _conversations.indexWhere((c) => c.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = _conversations[index].copyWith(
+        unreadMessages: _unreadCounts[conversationId],
+      );
+    }
+    _updateTotalUnreadCount();
+    notifyListeners();
+  }
+
+  /// Set the total unread message count directly
+  void setTotalUnreadCount(int count) {
+    if (_unreadMessageCount != count) {
+      _unreadMessageCount = count;
+      debugPrint(
+          '🔔 ConversationService: Total unread count set to $_unreadMessageCount');
+      _unreadCountController.add(_unreadMessageCount);
+      notifyListeners();
+    }
+  }
 }

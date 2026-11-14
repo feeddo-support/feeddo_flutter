@@ -81,6 +81,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
       ),
     );
     if (mounted) {
+      FeeddoInternal.instance.connectWebSocket();
       _loadConversations();
     }
   }
@@ -196,6 +197,7 @@ class _FeeddoMessagesScreenState extends State<FeeddoMessagesScreen> {
           ),
         );
         if (mounted) {
+          FeeddoInternal.instance.connectWebSocket();
           _loadConversations();
         }
       },

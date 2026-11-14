@@ -95,6 +95,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
       ),
     );
     if (mounted) {
+      FeeddoInternal.instance.connectWebSocket(conversationId: null);
       _loadHomeData();
     }
   }
@@ -793,6 +794,7 @@ class _FeeddoHomeScreenState extends State<FeeddoHomeScreen> {
               ),
             );
             if (mounted) {
+              FeeddoInternal.instance.connectWebSocket(conversationId: null);
               _loadHomeData();
             }
           },

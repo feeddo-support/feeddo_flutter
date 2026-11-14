@@ -49,17 +49,10 @@ Other users can see feature requests and reported bugs, upvote them, and add com
 
 ## Installation
 
-Add to your `pubspec.yaml`:
-
-```yaml
-dependencies:
-  feeddo_flutter: ^0.1.9
-```
-
-Then run:
+Install the latest version using:
 
 ```bash
-flutter pub get
+flutter pub add feeddo_flutter
 ```
 
 ## Platform Setup
@@ -201,63 +194,114 @@ await Feeddo.init(
 
 ## Notifications Setup
 
-### Push Notifications
+Push notifications are essential for Feeddo to work effectively—ensuring users receive live developer replies, task status updates, comments, and release announcements even when your app is backgrounded or closed.
 
-**1. Configure App & Dashboard**
+### Option A: iOS-Only Apps (Direct APNs via `feeddo_push_notification_apns`)
 
-To allow Feeddo to send push notifications, you need to provide your Firebase Service Account credentials:
+If your app targets iOS only, use the official [`feeddo_push_notification_apns`](https://pub.dev/packages/feeddo_push_notification_apns) companion package. It communicates directly with Apple APNs without Firebase and requires zero Swift code in `AppDelegate.swift`:
 
-1.  Go to the [Firebase Console](https://console.firebase.google.com/) > Project Settings > Service accounts.
-2.  Click **Generate new private key** to download the JSON file.
-3.  Go to [feeddo.dev](https://feeddo.dev), select your app, and navigate to **Settings > Notifications**.
-4.  Select **Google (FCM)** and upload the JSON file (or paste its contents).
+1. **Install companion package:**
+   ```bash
+   flutter pub add feeddo_push_notification_apns
+   ```
+2. **Xcode Setup:** Enable **Push Notifications** in **Signing & Capabilities**, and add `NSUserNotificationsUsageDescription` to `ios/Runner/Info.plist`.
+3. **Initialize in `main()`:**
+   ```dart
+   import 'package:feeddo_push_notification_apns/feeddo_push_notification_apns.dart';
 
-If you haven't set up push notifications in your Flutter app yet, follow the [Firebase Cloud Messaging Get Started guide](https://firebase.google.com/docs/cloud-messaging/flutter/get-started).
+   void main() async {
+     WidgetsFlutterBinding.ensureInitialized();
+     await FeeddoPushNotificationApns.instance.initialize();
+     runApp(const MyApp());
+   }
+   ```
+4. **Wire to Feeddo SDK:**
+   ```dart
+   await Feeddo.init(
+     apiKey: '<YOUR_FEEDDO_API_KEY>',
+     context: context,
+     pushToken: FeeddoPushNotificationApns.instance.token,
+     pushProvider: FeeddoPushProvider.apns,
+     isInAppNotificationOn: true,
+   );
 
-**2. Register Your Token**
+   // Auto-sync token updates, handle notification taps, and display in-app banner in foreground:
+   FeeddoPushNotificationApns.instance.attachToFeeddo(
+     onToken: (token) => Feeddo.registerPushToken(
+       pushToken: token,
+       pushProvider: FeeddoPushProvider.apns,
+     ),
+     onNotificationTap: (payload) => Feeddo.handleNotificationTap(context, payload),
+     onForegroundNotification: (payload) => Feeddo.handleForegroundNotification(
+       payload,
+       context: context,
+     ),
+   );
+   ```
+5. **Request permission contextually** (in Settings or Onboarding):
+   ```dart
+   await FeeddoPushNotificationApns.instance.requestNotificationPermissions();
+   ```
+6. **Feeddo Server Setup:** In [feeddo.dev](https://feeddo.dev) → **Settings → Notifications → Apple (APNs)**, enter your Team ID, Key ID, Bundle ID (Topic), Environment (Sandbox vs Production), and upload your `AuthKey_<KEY_ID>.p8` key.
 
-To get notifications even when the app is closed, register your push token:
+### Option B: Cross-Platform Apps (Firebase / FCM)
 
-```dart
-String? token = await FirebaseMessaging.instance.getToken();
-if (token != null) {
-  // When you get the FCM token
-  await Feeddo.registerPushToken(
-    pushToken: token,
-    pushProvider: FeeddoPushProvider.fcm,  // or .apns, .onesignal
-  );
-}
-```
+**1. Configure App & Feeddo Server**
 
-Or pass it directly to `init()`:
+1. In [Firebase Console](https://console.firebase.google.com/) > Project Settings > Service accounts, generate a private key (JSON).
+2. In [feeddo.dev](https://feeddo.dev) → **Settings > Notifications > Google (FCM)**, upload the JSON file.
+3. Under **For End Users**, confirm notification triggers are enabled.
+
+**2. Register Your Token & Handlers**
 
 ```dart
 String? token = await FirebaseMessaging.instance.getToken();
 
 await Feeddo.init(
-  apiKey: 'your-api-key',
+  apiKey: '<YOUR_FEEDDO_API_KEY>',
   context: context,
   pushToken: token,
   pushProvider: FeeddoPushProvider.fcm,
 );
-```
 
-When a push notification arrives, handle it like this:
-
-```dart
-// Handle notification tap when app is in background/terminated
-FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  Feeddo.handleNotificationTap(context, message.data);
+// Token refresh
+FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+  Feeddo.registerPushToken(
+    pushToken: newToken,
+    pushProvider: FeeddoPushProvider.fcm,
+  );
 });
 
-// Handle notification when app is in foreground
+// Terminated launch tap
+final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+if (initialMessage != null && context.mounted) {
+  await Feeddo.handleNotificationTap(context, initialMessage.data);
+}
+
+// Background notification tap
+FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  if (context.mounted) {
+    Feeddo.handleNotificationTap(context, message.data);
+  }
+});
+
+// Suppress native system notification in foreground
+await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+  alert: false,
+  badge: true,
+  sound: false,
+);
+
+// Show Feeddo in-app banner for foreground notifications
 FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  Feeddo.showInappNotification(
-    context: context,
-    title: message.notification?.title ?? 'New Message',
-    message: message.notification?.body ?? '',
-    data: message.data,
-  );
+  if (context.mounted) {
+    Feeddo.handleForegroundNotification(
+      message.data,
+      context: context,
+      title: message.notification?.title,
+      message: message.notification?.body,
+    );
+  }
 });
 ```
 
